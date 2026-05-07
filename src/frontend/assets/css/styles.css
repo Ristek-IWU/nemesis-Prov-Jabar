@@ -1137,3 +1137,150 @@ body {
     justify-content: flex-start;
   }
 }
+/* =========================
+   ENHANCED DARK MODE
+========================= */
+
+body.dark {
+  background: #0b1220;
+  color: #f8fafc;
+}
+
+/* HEADER */
+body.dark .hdr {
+  background: linear-gradient(135deg, #111827, #1e293b);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+/* KPI CARD */
+body.dark .kc {
+  background: #1e293b;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.35);
+}
+
+/* SIDEBAR */
+body.dark .sb {
+  background: #172033;
+}
+
+/* PANEL ITEM */
+body.dark .pi {
+  background: #1e293b;
+}
+
+body.dark .pi:hover {
+  background: #243247;
+}
+
+/* MAP */
+body.dark #map {
+  filter: brightness(0.95) contrast(1.05);
+}
+
+/* MODAL */
+body.dark .modal {
+  background: #111827;
+}
+
+/* BUTTON */
+body.dark button {
+  background: #334155;
+  color: white;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+body.dark button:hover {
+  background: #475569;
+}
+
+/* TOGGLE */
+.theme-toggle {
+  padding: 9px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+/* TEXT */
+body.dark .hdr-t h1,
+body.dark .pn,
+body.dark .ppv,
+body.dark .dbv {
+  color: #ffffff;
+}
+
+/* SECONDARY TEXT */
+body.dark .hdr-t span,
+body.dark .ppl,
+body.dark .pst,
+body.dark .tbl-sub {
+  color: #cbd5e1;
+}
+/* =========================
+   LIGHT MODE
+========================= */
+
+body:not(.dark) {
+  --b0: #f1f5f9;     /* background utama */
+  --b1: #ffffff;     /* sidebar/header */
+  --b2: #ffffff;     /* card */
+  --b2h: #e2e8f0;
+
+  --bd: #dbe4ee;
+
+  --t1: #0f172a;     /* text utama */
+  --t2: #334155;
+  --t3: #64748b;
+
+  --sage: #2563eb;
+  --olive: #3b82f6;
+
+  --rose: #e11d48;
+  --brick: #dc2626;
+
+  --sage-g: rgba(37, 99, 235, 0.12);
+  --olive-g: rgba(59, 130, 246, 0.12);
+  --rose-g: rgba(225, 29, 72, 0.12);
+  --brick-g: rgba(220, 38, 38, 0.12);
+}
+
+/* BODY */
+body:not(.dark) {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* HEADER */
+body:not(.dark) .hdr {
+  background: white;
+  border-bottom: 1px solid #dbe4ee;
+}
+
+/* CARD */
+body:not(.dark) .kc {
+  background: white;
+  box-shadow: 0 2px 12px rgba(15,23,42,0.06);
+}
+
+/* SIDEBAR */
+body:not(.dark) .sb {
+  background: #ffffff;
+}
+
+/* PANEL */
+body:not(.dark) .pi {
+  background: white;
+}
+
+/* BUTTON */
+body:not(.dark) button {
+  background: white;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+}
+
+body:not(.dark) button:hover {
+  background: #f8fafc;
+}
