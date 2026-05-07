@@ -4,10 +4,12 @@ window['AuditMap'] = (() => {
   const LINE_LAYER = 'audit-line';
   const HOVER_FILL = 'audit-fill-hover';
   const HOVER_LINE = 'audit-line-hover';
+  const SELECTED_LINE = 'audit-line-selected';
 
   let map = null;
   let popup = null;
   let hoveredId = null;
+  let selectedId = null;
   let _isProvinceView = false;
   let _onAreaClick = null;
   let _getPopupHtml = null;
@@ -150,36 +152,60 @@ window['AuditMap'] = (() => {
       },
     });
 
+    map.addLayer({
+      id: SELECTED_LINE,
+      type: 'line',
+      source: SOURCE,
+      paint: {
+        'line-color': '#f0d8a8', 
+        'line-width': 3,         
+        'line-opacity': [
+          'case',
+          ['boolean', ['feature-state', 'selected'], false],
+          1, 
+          0
+        ],
+      },
+    });
+
     map.on('mousemove', FILL_LAYER, (e) => {
       if (!e.features.length) return;
 
-      map.getCanvas().style.cursor = 'pointer';
       const feature = e.features[0];
       const id = feature.id;
+      const isCimahi = feature.properties.KADMKK === "Kota Cimahi" || 
+                       feature.properties.regionKey === "kota-cimahi";
 
-      if (hoveredId !== null && hoveredId !== id) {
-        map.setFeatureState({ source: SOURCE, id: hoveredId }, { hover: false });
-      }
-      hoveredId = id;
-      map.setFeatureState({ source: SOURCE, id: id }, { hover: true });
+    if (isCimahi) {
+    map.getCanvas().style.cursor = 'pointer';
+    if (hoveredId !== null && hoveredId !== id) {
+      map.setFeatureState({ source: SOURCE, id: hoveredId }, { hover: false });
+    }
+    hoveredId = id;
+    map.setFeatureState({ source: SOURCE, id: id }, { hover: true });
 
       if (_getPopupHtml && feature.properties) {
-        const areaKey = getFeatureAreaKey(feature.properties);
-        const html = _getPopupHtml(areaKey);
-        if (html) {
-          if (!popup) {
-            popup = new window['maplibregl'].Popup({
-              closeButton: false,
-              closeOnClick: false,
-              maxWidth: '320px',
-              className: 'audit-popup',
-              offset: 12,
-            });
-          }
+      const areaKey = getFeatureAreaKey(feature.properties);
+      const html = _getPopupHtml(areaKey);
+      if (html) {
+        if (!popup) {
+          popup = new window['maplibregl'].Popup({
+            closeButton: false,
+            closeOnClick: false,
+            maxWidth: '320px',
+            className: 'audit-popup',
+            offset: 12,
+          });
+        }
           popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
         }
       }
+    } else {
+      map.getCanvas().style.cursor = '';
+      clearHover();
+    }
     });
+  
 
     map.on('mouseleave', FILL_LAYER, () => {
       map.getCanvas().style.cursor = '';
@@ -188,8 +214,21 @@ window['AuditMap'] = (() => {
 
     map.on('click', FILL_LAYER, (e) => {
       if (!e.features.length) return;
-      const areaKey = getFeatureAreaKey(e.features[0].properties);
-      if (_onAreaClick) _onAreaClick(areaKey);
+      const feature = e.features[0];
+      const isCimahi = feature.properties.KADMKK === "Kota Cimahi" || 
+                       feature.properties.regionKey === "kota-cimahi";
+
+      if (isCimahi) {
+        const id = feature.id;
+        if (selectedId !== null) {
+          map.setFeatureState({ source: SOURCE, id: selectedId }, { selected: false });
+        }
+        selectedId = id;
+        map.setFeatureState({ source: SOURCE, id: id }, { selected: true });
+
+        const areaKey = getFeatureAreaKey(feature.properties);
+        if (_onAreaClick) _onAreaClick(areaKey);
+      }
     });
   }
 
@@ -211,11 +250,21 @@ window['AuditMap'] = (() => {
       map.getSource(SOURCE).setData(styledGeo);
 
       if (options.fitBounds) {
-        const bounds = computeBounds(geo);
+        const cimahiOnly = {
+          ...geo,
+          features: geo.features.filter(
+            (f) =>
+              f.properties.KADMKK === "Kota Cimahi" ||
+              f.properties.regionKey === "kota-cimahi"
+          ),
+        };
+
+        const bounds = computeBounds(cimahiOnly);
+
         if (bounds) {
           map.fitBounds(bounds, {
-            padding: options.isProvinceView ? 80 : 50,
-            duration: 300,
+            padding: 100,
+            duration: 1000,
           });
         }
       }
