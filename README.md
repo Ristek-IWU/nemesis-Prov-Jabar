@@ -67,7 +67,20 @@ For Development:
 npm run dev
 ```
 
-The unified orchestrated server will boot automatically. Open your browser to the local URL explicitly printed in your terminal (usually `http://127.0.0.1:$PORT`).
+**For Docker (Recommended for Deployment):**
+You can easily spin up the application in an isolated container using Docker Compose. This automatically binds your local `data`, `dataset`, and `logs` folders while abstracting away Node versions.
+
+1. **Start the container:**
+```bash
+docker-compose up -d --build
+```
+
+2. **Prepare the database (if not already done locally):**
+Because the container already has Node.js and SQLite installed, you don't need them on your host machine! You can prepare the data directly inside the running container:
+- **For Option A (Raw Dataset):** `docker exec -it nemesis npm run db:reset`
+- **For Option B (SQL Dump):** Attach to the container using `docker exec -it nemesis sh` and run the `sqlite3` commands listed above.
+
+The unified orchestrated server will boot automatically. Open your browser to the local URL explicitly printed in your terminal (usually `http://127.0.0.1:3000`).
 
 ## Notes
 - **Cross-Platform:** The overarching terminal commands utilize `cross-env` internally. You can confidently run `npm run dev` and `npm run start` natively on Linux, macOS, or Windows without breaking environment pipelines.

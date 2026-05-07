@@ -1,3 +1,6 @@
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
+
 window['AuditMap'] = (() => {
   const SOURCE = 'audit-areas';
   const FILL_LAYER = 'audit-fill';
@@ -68,7 +71,7 @@ window['AuditMap'] = (() => {
 
   function ensureMap(container) {
     if (map) return;
-    map = new window['maplibregl'].Map({
+    map = new maplibregl.Map({
       container,
       center: [118, -2.5],
       zoom: 5,

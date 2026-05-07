@@ -11,8 +11,9 @@ dist/
 dist-ssr/
 
 # Runtime Data (SQLite & JSON Datasets)
-data/dashboard.sqlite
-data/dashboard.sql
+data/*
+!data/patch-v1-to-v2.sql
+
 dataset/
 backend/data/
 backend/dataset/
@@ -39,6 +40,3 @@ Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj
-
-# Others
-Review-1.md
