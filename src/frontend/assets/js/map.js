@@ -209,7 +209,14 @@ window['AuditMap'] = (() => {
 
       const styledGeo = buildStyledGeo(geo, options.getFeatureStyle);
       map.getSource(SOURCE).setData(styledGeo);
-
+      // Tambahkan di baris 212 (di bawah setData)
+if (!options.isProvinceView) {
+  // Tambahkan marker merah di Bekasi
+  new window['maplibregl'].Marker({ color: '#FF0000' })
+    .setLngLat([106.9924, -6.2383])
+    .setPopup(new window['maplibregl'].Popup().setHTML('<strong>Kota Bekasi</strong>'))
+    .addTo(map);
+}
       if (options.fitBounds) {
         const bounds = computeBounds(geo);
         if (bounds) {
