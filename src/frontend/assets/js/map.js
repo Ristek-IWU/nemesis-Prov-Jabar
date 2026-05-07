@@ -63,18 +63,41 @@ window['AuditMap'] = (() => {
         ]
       : null;
   }
+// ganti kode berikut dengan kode yang sudah diperbarui
+// di ganti oleh kelompok 7
 
-  function ensureMap(container) {
-    if (map) return;
-    map = new window['maplibregl'].Map({
-      container,
-      center: [118, -2.5],
-      zoom: 5,
-      minZoom: 4,
-      maxZoom: 12,
-      style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-    });
-  }
+ function ensureMap(container) {
+  if (map) return;
+
+  map = new window['maplibregl'].Map({
+    container,
+    center: [118, -2.5],
+    zoom: 5,
+    minZoom: 4,
+    maxZoom: 12,
+    style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+  });
+
+  // Marker Purwakarta
+  const purwakartaMarker = new window['maplibregl'].Marker({
+    color: '#ff0000'
+  })
+    .setLngLat([107.443, -6.556])
+    .setPopup(
+  new window['maplibregl'].Popup().setHTML(
+    `
+      <h3 style="color: purple; margin-bottom: 5px;">
+        Purwakarta
+      </h3>
+
+      <p style="color: purple; font-weight: bold;">
+        Wilayah Fokus Kelompok 7
+      </p>
+    `
+  )
+)
+    .addTo(map);
+}
 
   function closePopup() {
     if (popup) {

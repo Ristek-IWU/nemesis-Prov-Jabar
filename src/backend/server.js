@@ -88,7 +88,10 @@ db.exec(
   'CREATE INDEX IF NOT EXISTS idx_packages_owner_lookup ON packages(owner_type, owner_name);'
 );
 
-const app = createApp(db);
+const app = createApp(
+  
+);
+// @ts-ignore
 const server = app.listen(PORT, () => {
   console.log(`Dashboard backend listening on http://127.0.0.1:${PORT}`);
   console.log(`SQLite database: ${runtimeDbPath}`);
