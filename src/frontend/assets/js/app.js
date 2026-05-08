@@ -596,8 +596,8 @@
     dom.legend.style.padding = '';
     const legend = getActiveLegend();
     const title = isProvinceView()
-      ? 'Potensi Pemborosan Paket Pemprov per Provinsi'
-      : 'Potensi Pemborosan per Kab/Kota';
+      ? 'Potensi Pemborosan Paket'
+      : 'Deteksi Anomali Pengadaan - Sumedang';
     const zeroLabel = isProvinceView()
       ? 'Tidak ada paket pemprov terdeteksi'
       : 'Tidak ada potensi terdeteksi';
@@ -662,7 +662,7 @@
         placeholder
       )}" value="${escapeAttr(state.search)}" oninput="${actionExpr('dashboardActions.setSearch(this.value)')}" /></div>` +
       `<div class="sort-bar"><label>Urutkan</label><select onchange="${actionExpr('dashboardActions.setSort(this.value)')}" aria-label="Urutkan area">` +
-      `<option value="waste"${state.sortBy === 'waste' ? ' selected' : ''}>Potensi Pemborosan</option>` +
+      `<option value="waste"${state.sortBy === 'waste' ? ' selected' : ''}>Tingkat Anomali</option>` +
       `<option value="priority"${state.sortBy === 'priority' ? ' selected' : ''}>Paket Prioritas</option>` +
       `<option value="packages"${state.sortBy === 'packages' ? ' selected' : ''}>Total Paket</option>` +
       `<option value="budget"${state.sortBy === 'budget' ? ' selected' : ''}>Total Pagu</option>` +

@@ -144,7 +144,7 @@ useEffect(() => {
           <div className="logo">AUD</div>
 
           <div className="hdr-t">
-            <h1>Audit Pengadaan per Kab/Kota</h1>
+            <h1>Audit Pengadaan Kabupaten Sumedang</h1>
 
             <span>
               Artifact hasil analyze &middot; LKPP / SiRUP &middot; Tahun Anggaran 2026

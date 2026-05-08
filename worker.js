@@ -8,6 +8,49 @@ import { createStream } from 'rotating-file-stream';
 import { createApp } from './src/backend/app.js';
 import { resolveRuntimeDbPath } from './src/backend/db.js';
 
+import Database from 'better-sqlite3';
+
+const db = new Database('data/kabupaten_sumedang.sqlite');
+
+// 1. Buat tabel owner_metrics kalau belum ada
+db.prepare(`
+  CREATE TABLE IF NOT EXISTS owner_metrics (
+    owner_type TEXT,
+    owner_name TEXT,
+    total_packages INTEGER DEFAULT 0,
+    total_priority_packages INTEGER DEFAULT 0,
+    total_flagged_packages INTEGER DEFAULT 0,
+    total_potential_waste REAL DEFAULT 0,
+    total_budget REAL DEFAULT 0,
+    med_severity_packages INTEGER DEFAULT 0,
+    high_severity_packages INTEGER DEFAULT 0,
+    absurd_severity_packages INTEGER DEFAULT 0
+  )
+`).run();
+console.log("✅ Tabel owner_metrics siap!");
+
+// 2. Tambahin kolom yang mungkin masih kurang di region_metrics (biar aman)
+const columns = [
+  'central_packages INTEGER DEFAULT 0', 'provincial_packages INTEGER DEFAULT 0',
+  'local_packages INTEGER DEFAULT 0', 'other_packages INTEGER DEFAULT 0',
+  'central_priority_packages INTEGER DEFAULT 0', 'provincial_priority_packages INTEGER DEFAULT 0',
+  'local_priority_packages INTEGER DEFAULT 0', 'other_priority_packages INTEGER DEFAULT 0',
+  'central_potential_waste REAL DEFAULT 0', 'provincial_potential_waste REAL DEFAULT 0',
+  'local_potential_waste REAL DEFAULT 0', 'other_potential_waste REAL DEFAULT 0',
+  'central_budget REAL DEFAULT 0', 'provincial_budget REAL DEFAULT 0',
+  'local_budget REAL DEFAULT 0', 'other_budget REAL DEFAULT 0'
+];
+
+columns.forEach(col => {
+  try {
+    db.prepare(`ALTER TABLE region_metrics ADD COLUMN ${col}`).run();
+  } catch (e) {
+    // skip kalau sudah ada
+  }
+});
+
+db.close();
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '.env') });
 

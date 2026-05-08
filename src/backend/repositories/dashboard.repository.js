@@ -53,6 +53,22 @@ export function getRegionRows(db) {
         /* region_metrics.central_priority_packages, */
         /* region_metrics.provincial_priority_packages, */
         /* ... dan seterusnya ... */
+        0 AS central_packages,
+        0 AS provincial_packages,
+        0 AS local_packages,
+        0 AS other_packages,
+        0 AS central_priority_packages,
+        0 AS provincial_priority_packages,
+        0 AS local_priority_packages,
+        0 AS other_priority_packages,
+        0 AS central_potential_waste,
+        0 AS provincial_potential_waste,
+        0 AS local_potential_waste,
+        0 AS other_potential_waste,
+        0 AS central_budget,
+        0 AS provincial_budget,
+        0 AS local_budget,
+        0 AS other_budget,
         region_metrics.med_severity_packages,
         region_metrics.high_severity_packages,
         region_metrics.absurd_severity_packages
