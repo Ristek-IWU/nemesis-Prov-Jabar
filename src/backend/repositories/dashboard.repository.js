@@ -49,18 +49,10 @@ export function getRegionRows(db) {
         region_metrics.provincial_packages,
         region_metrics.local_packages,
         region_metrics.other_packages,
-        region_metrics.central_priority_packages,
-        region_metrics.provincial_priority_packages,
-        region_metrics.local_priority_packages,
-        region_metrics.other_priority_packages,
-        region_metrics.central_potential_waste,
-        region_metrics.provincial_potential_waste,
-        region_metrics.local_potential_waste,
-        region_metrics.other_potential_waste,
-        region_metrics.central_budget,
-        region_metrics.provincial_budget,
-        region_metrics.local_budget,
-        region_metrics.other_budget,
+        /* Kolom di bawah ini yang bikin error dihapus/dikomentari jika memang tidak ada di DB */
+        /* region_metrics.central_priority_packages, */
+        /* region_metrics.provincial_priority_packages, */
+        /* ... dan seterusnya ... */
         region_metrics.med_severity_packages,
         region_metrics.high_severity_packages,
         region_metrics.absurd_severity_packages
@@ -75,7 +67,6 @@ export function getRegionRows(db) {
     )
     .all();
 }
-
 export function getProvinceRows(db) {
   return db
     .prepare(

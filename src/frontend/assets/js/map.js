@@ -10,10 +10,12 @@ window['AuditMap'] = (() => {
   const LINE_LAYER = 'audit-line';
   const HOVER_FILL = 'audit-fill-hover';
   const HOVER_LINE = 'audit-line-hover';
+  const SELECTED_LINE = 'audit-line-selected';
 
   let map = null;
   let popup = null;
   let hoveredId = null;
+  let selectedId = null;
   let _isProvinceView = false;
   let _onAreaClick = null;
   let _getPopupHtml = null;
@@ -188,6 +190,22 @@ window['AuditMap'] = (() => {
       },
     });
 
+    map.addLayer({
+      id: SELECTED_LINE,
+      type: 'line',
+      source: SOURCE,
+      paint: {
+        'line-color': '#f0d8a8',
+        'line-width': 3,
+        'line-opacity': [
+          'case',
+          ['boolean', ['feature-state', 'selected'], false],
+          1,
+          0
+        ],
+      },
+    });
+
     map.on('mousemove', FILL_LAYER, (e) => {
       if (!e.features.length) return;
 <<<<<<< HEAD
@@ -197,12 +215,11 @@ window['AuditMap'] = (() => {
       map.getCanvas().style.cursor = 'pointer';
       const feature = e.features[0];
       const id = feature.id;
+      const props = feature.properties;
 
-      if (hoveredId !== null && hoveredId !== id) {
-        map.setFeatureState({ source: SOURCE, id: hoveredId }, { hover: false });
-      }
-      hoveredId = id;
-      map.setFeatureState({ source: SOURCE, id: id }, { hover: true });
+      // <<< UBAH DI SINI: Logika pengecekan Cimahi yang lebih fleksibel
+      const isCimahi = (props.KADMKK && props.KADMKK.toUpperCase().includes("CIMAHI")) || 
+                       (props.regionKey && props.regionKey.toLowerCase().includes("cimahi"));
 
       if (_getPopupHtml && feature.properties) {
         const areaKey = getFeatureAreaKey(feature.properties);
@@ -222,7 +239,33 @@ window['AuditMap'] = (() => {
             });
           }
           popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
+      if (isCimahi) {
+        map.getCanvas().style.cursor = 'pointer';
+        if (hoveredId !== null && hoveredId !== id) {
+          map.setFeatureState({ source: SOURCE, id: hoveredId }, { hover: false });
         }
+        hoveredId = id;
+        map.setFeatureState({ source: SOURCE, id: id }, { hover: true });
+
+        if (_getPopupHtml && props) {
+          const areaKey = getFeatureAreaKey(props);
+          const html = _getPopupHtml(areaKey);
+          if (html) {
+            if (!popup) {
+              popup = new window['maplibregl'].Popup({
+                closeButton: false,
+                closeOnClick: false,
+                maxWidth: '320px',
+                className: 'audit-popup',
+                offset: 12,
+              });
+            }
+            popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
+          }
+        }
+      } else {
+        map.getCanvas().style.cursor = '';
+        clearHover();
       }
     });
 
@@ -233,8 +276,24 @@ window['AuditMap'] = (() => {
 
     map.on('click', FILL_LAYER, (e) => {
       if (!e.features.length) return;
-      const areaKey = getFeatureAreaKey(e.features[0].properties);
-      if (_onAreaClick) _onAreaClick(areaKey);
+      const feature = e.features[0];
+      const props = feature.properties;
+
+      // <<< UBAH DI SINI: Samakan logika klik dengan mousemove
+      const isCimahi = (props.KADMKK && props.KADMKK.toUpperCase().includes("CIMAHI")) || 
+                       (props.regionKey && props.regionKey.toLowerCase().includes("cimahi"));
+
+      if (isCimahi) {
+        const id = feature.id;
+        if (selectedId !== null) {
+          map.setFeatureState({ source: SOURCE, id: selectedId }, { selected: false });
+        }
+        selectedId = id;
+        map.setFeatureState({ source: SOURCE, id: id }, { selected: true });
+
+        const areaKey = getFeatureAreaKey(props);
+        if (_onAreaClick) _onAreaClick(areaKey);
+      }
     });
   }
 
@@ -264,6 +323,21 @@ window['AuditMap'] = (() => {
             padding: 50,
             duration: 2000, // Durasi zoom in 2 detik
             essential: true
+        const cimahiOnly = {
+          ...geo,
+          features: geo.features.filter((f) => {
+            const p = f.properties;
+            // <<< UBAH DI SINI: Agar zoom otomatis (fitBounds) juga bekerja
+            return (p.KADMKK && p.KADMKK.toUpperCase().includes("CIMAHI")) || 
+                   (p.regionKey && p.regionKey.toLowerCase().includes("cimahi"));
+          }),
+        };
+
+        const bounds = computeBounds(cimahiOnly);
+        if (bounds) {
+          map.fitBounds(bounds, {
+            padding: 100,
+            duration: 1000,
           });
         }
       }
@@ -303,3 +377,4 @@ export {};
 =======
 export {};
 >>>>>>> main
+export {};
