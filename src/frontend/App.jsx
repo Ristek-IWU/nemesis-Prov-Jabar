@@ -1,5 +1,5 @@
+import lagu from './assets/audio/lagu.mp3';
 import { useState, useEffect, useRef } from 'preact/hooks';
-
 
 // For this strictly structural integration phase, we wrap the vanilla mount
 // without altering the UI or logic to maintain identical CSS and user paths.
@@ -15,7 +15,7 @@ export function App() {
   const [musicPlaying, setMusicPlaying] = useState(false);
 
   useEffect(() => {
-   audioRef.current = new Audio('/lagu.mp3');
+   audioRef.current = new Audio(lagu);
 
     audioRef.current.loop = true;
     audioRef.current.volume = 0.25;
