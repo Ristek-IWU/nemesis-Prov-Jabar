@@ -365,9 +365,22 @@ window['AuditMap'] = (() => {
 
       const styledGeo = buildStyledGeo(geo, options.getFeatureStyle);
       map.getSource(SOURCE).setData(styledGeo);
+      // Tambahkan di baris 212 (di bawah setData)
+// Tambahkan di baris 213-219 (di dalam blok if !options.isProvinceView)
+if (!options.isProvinceView) {
+    // Membuat popup dengan gaya kustom
+    const popup = new window['maplibregl'].Popup({ offset: 25, closeButton: false })
+        .setHTML('<b style="color: #fd599d; font-size: 15px;">Kota Bekasi</b><br><span style="color: #fd599d;">Wilayah Fokus Kelompok 8</span>');
 
 <<<<<<< HEAD
       // OTOMATIS ZOOM KE GARUT
+    // Menambahkan marker merah dan menempelkan popup-nya
+    new window['maplibregl'].Marker({ color: '#FF0000' })
+        .setLngLat([106.9924, -6.2383])
+        .setPopup(popup)
+        .addTo(map)
+        .togglePopup(); // Agar langsung terbuka otomatis
+}
       if (options.fitBounds) {
         const bounds = computeBounds(geo, options.focusAreaKey);
         if (bounds) {

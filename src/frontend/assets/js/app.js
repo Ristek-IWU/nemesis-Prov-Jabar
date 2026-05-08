@@ -822,6 +822,26 @@
       strokeWidth: selected ? 2.1 : 1.0,
       strokeOpacity,
     };
+  const areaKey = getFeatureAreaKey(feature);
+  const area = getActiveAreaByKey(areaKey);
+  const visible = areaMatchesCurrentView(area);
+  const selected = state.selectedAreaKey === areaKey;
+
+const isKotaBekasi = feature.properties.displayName?.toUpperCase() === 'KOTA BEKASI' || 
+                     feature.properties.regionKey === '3275';
+
+return {
+  // 1. Highlight Isi Wilayah
+  // Ganti isBekasi jadi isKotaBekasi di bawah ini:
+  fillColor: isKotaBekasi ? '#ffeb3b' : (selected ? '#f0d8a8' : (area ? getLegendColor(area.totalPotentialWaste) : '#243155')),
+  fillOpacity: isKotaBekasi ? 0.9 : (selected ? 0.72 : (visible ? 0.52 : 0.08)),
+
+  // 2. Garis Pembatas (Warna & Ketebalan)
+  // Ganti isBekasi jadi isKotaBekasi di bawah ini:
+  strokeColor: isKotaBekasi ? '#00ff00' : (selected ? '#ffffff' : '#b5a882'),
+  strokeWidth: isKotaBekasi ? 5.0 : (selected ? 2.5 : 0.8),
+  strokeOpacity: isKotaBekasi || selected ? 1 : 0.2,
+};
   }
 
   function popupHtml(area) {
