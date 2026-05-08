@@ -71,8 +71,8 @@ window['AuditMap'] = (() => {
     if (map) return;
     map = new maplibregl.Map({
       container,
-      center: [118, -2.5],
-      zoom: 5,
+      center: [108.2207, -7.3506],
+      zoom: 10,
       minZoom: 4,
       maxZoom: 12,
       style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
@@ -213,15 +213,15 @@ window['AuditMap'] = (() => {
       const styledGeo = buildStyledGeo(geo, options.getFeatureStyle);
       map.getSource(SOURCE).setData(styledGeo);
 
-      if (options.fitBounds) {
-        const bounds = computeBounds(geo);
-        if (bounds) {
-          map.fitBounds(bounds, {
-            padding: options.isProvinceView ? 80 : 50,
-            duration: 300,
-          });
-        }
-      }
+      // if (options.fitBounds) {
+      //   const bounds = computeBounds(geo);
+      //   if (bounds) {
+      //     map.fitBounds(bounds, {
+      //       padding: options.isProvinceView ? 80 : 50,
+      //       duration: 300,
+      //     });
+      //   }
+      // }
 
       if (onReady) onReady();
     };
