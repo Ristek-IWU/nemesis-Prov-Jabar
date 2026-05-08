@@ -68,8 +68,8 @@ window['AuditMap'] = (() => {
     if (map) return;
     map = new window['maplibregl'].Map({
       container,
-      center: [118, -2.5],
-      zoom: 5,
+      center: [107.60, -6.90],
+      zoom: 7.5,
       minZoom: 4,
       maxZoom: 12,
       style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
