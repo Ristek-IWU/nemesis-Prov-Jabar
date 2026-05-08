@@ -1538,6 +1538,9 @@
     toggleMap,
   };
 
+// Background music
+
+
   bindEvents();
   bootstrap();
 })();
