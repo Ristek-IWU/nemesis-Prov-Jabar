@@ -1,4 +1,4 @@
-/* global fetch, URLSearchParams, window */
+/* global fetch, URLSearchParams, window, Chart */
 (() => {
   const API_BASE_URL = (window['DASHBOARD_API_BASE_URL'] || '/api').replace(
     /\/$/,
@@ -939,6 +939,134 @@
         .join('')
       : `<tr><td colspan="7" class="table-empty">Tidak ada paket untuk filter saat ini.</td></tr>`;
   }
+  function renderRegionCharts(region) {
+
+  // destroy chart lama
+  // @ts-ignore
+  if (window.severityChartInstance) {
+    // @ts-ignore
+    window.severityChartInstance.destroy();
+  }
+
+  // @ts-ignore
+  if (window.ownerChartInstance) {
+    // @ts-ignore
+    window.ownerChartInstance.destroy();
+  }
+
+  // ======================
+  // SEVERITY PIE CHART
+  // ======================
+
+  const severityCanvas =
+    document.getElementById('severityPieChart');
+
+  if (severityCanvas) {
+
+    // @ts-ignore
+    window.severityChartInstance =
+      // @ts-ignore
+      new Chart(severityCanvas, {
+
+      type: 'pie',
+
+      data: {
+        labels: [
+          'Low',
+          'Medium',
+          'High',
+          'Absurd'
+        ],
+
+        datasets: [{
+          data: [
+            region.severityCounts.low || 0,
+            region.severityCounts.med || 0,
+            region.severityCounts.high || 0,
+            region.severityCounts.absurd || 0,
+          ],
+
+          backgroundColor: [
+            '#7b86a3',
+            '#8b7332',
+            '#a83c2e',
+            '#d4a999',
+          ],
+
+          borderWidth: 0,
+        }]
+      },
+
+      options: {
+        responsive: true,
+
+        plugins: {
+          legend: {
+            labels: {
+              color: 'white'
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // ======================
+  // OWNER DOUGHNUT
+  // ======================
+
+  const ownerCanvas =
+    document.getElementById('ownerPieChart');
+
+  if (ownerCanvas) {
+    // @ts-ignore
+    window.ownerChartInstance =
+      // @ts-ignore
+      new Chart(ownerCanvas, {
+
+      type: 'doughnut',
+
+      data: {
+        labels: [
+          'Kementerian',
+          'Pemprov',
+          'Pemkot',
+          'Others'
+        ],
+
+        datasets: [{
+          data: [
+            ownerTypeCount(region, 'central'),
+            ownerTypeCount(region, 'provinsi'),
+            ownerTypeCount(region, 'kabkota'),
+            ownerTypeCount(region, 'other'),
+          ],
+
+          backgroundColor: [
+            '#1890ff',
+            '#13c2c2',
+            '#2f54eb',
+            '#fa8c16',
+          ],
+
+          borderWidth: 0,
+        }]
+      },
+
+      options: {
+        responsive: true,
+
+        plugins: {
+          legend: {
+            labels: {
+              color: 'white'
+            }
+          }
+        }
+      }
+    });
+  }
+}
 
   function renderPagination(pagination) {
     return `<div class="pager"><button class="pager-btn" ${pagination.page <= 1 ? 'disabled' : ''} onclick="${actionCall(
@@ -995,8 +1123,21 @@
       `<div class="mini-stat"><span>Severity Absurd</span><strong>${escapeHtml(
         formatNumber(region.severityCounts.absurd)
       )}</strong></div>` +
-      `</div>` +
-      `<div class="modal-filters">` +
+      `</div>
+
+<div class="chart-section">
+    <div class="chart-box">
+      <h3>Distribusi Severity</h3>
+      <canvas id="severityPieChart"></canvas>
+    </div>
+
+    <div class="chart-box">
+      <h3>Distribusi Pemilik</h3>
+      <canvas id="ownerPieChart"></canvas>
+    </div>
+</div>
+
+<div class="modal-filters">`+
       `<input id="modalSearch" type="text" placeholder="Cari paket, lembaga, atau satker..." value="${escapeAttr(
         state.modal.search
       )}" oninput="${actionExpr('dashboardActions.setModalSearch(this.value)')}" />` +
@@ -1017,6 +1158,9 @@
       )} paket pada area ini</div>` +
       `<table class="rtbl"><thead><tr><th>ID</th><th>Nama Paket</th><th>Pemilik</th><th>Satker / Lokasi</th><th>Pagu</th><th>Severity</th><th>Alasan</th></tr></thead><tbody>${rowsHtml}</tbody></table>` +
       renderPagination(payload.pagination);
+      setTimeout(() => {
+  renderRegionCharts(region);
+}, 50);
   }
 
   function renderProvinceModalContent(payload) {
@@ -1487,6 +1631,103 @@
     toggleLegend,
     toggleMap,
   };
+function injectChartStyles() {
+
+  if (document.getElementById('dashboard-chart-styles')) {
+    return;
+  }
+
+  const style = document.createElement('style');
+
+  style.id = 'dashboard-chart-styles';
+
+  style.innerHTML = `
+  
+  /* =========================
+     CHART SECTION
+  ========================= */
+
+  .chart-section{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+    gap:20px;
+    margin-bottom:20px;
+  }
+
+  .chart-box{
+    background:#162447;
+    border:1px solid rgba(255,255,255,.06);
+    border-radius:16px;
+    padding:20px;
+    position:relative;
+    overflow:hidden;
+
+    animation:fadeChart .25s ease;
+
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+
+    box-shadow:
+      0 10px 30px rgba(0,0,0,.22),
+      inset 0 1px 0 rgba(255,255,255,.03);
+  }
+
+  .chart-box::before{
+    content:'';
+    position:absolute;
+    inset:0;
+
+    background:linear-gradient(
+      180deg,
+      rgba(255,255,255,.03),
+      rgba(255,255,255,0)
+    );
+
+    pointer-events:none;
+  }
+
+  .chart-box h3{
+    color:var(--t1);
+    font-size:13px;
+    font-weight:600;
+    margin-bottom:18px;
+    letter-spacing:.3px;
+  }
+
+  .chart-box canvas{
+    width:100% !important;
+    height:300px !important;
+  }
+
+  @media (max-width: 900px){
+
+    .chart-section{
+      grid-template-columns:1fr;
+    }
+
+    .chart-box canvas{
+      height:260px !important;
+    }
+  }
+
+  @keyframes fadeChart{
+
+    from{
+      opacity:0;
+      transform:translateY(8px);
+    }
+
+    to{
+      opacity:1;
+      transform:translateY(0);
+    }
+  }
+
+  `;
+  
+  document.head.appendChild(style);
+}
+injectChartStyles();
 
   bindEvents();
   bootstrap();
