@@ -893,10 +893,15 @@
   }
 
   function renderPackageTableRows(items) {
-    return items.length
-      ? items
+    items = items.sort((a, b) => {
+    return (b.budget || 0) - (a.budget || 0);
+  });
+  
+  return items.length
+    ? items
         .map((item) => {
           const packageUrl = buildInaprocUrl(item.sourceId);
+
 
           return (
             `<tr${packageUrl
