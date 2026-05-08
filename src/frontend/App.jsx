@@ -1,15 +1,13 @@
-<<<<<<< HEAD
 import { useState, useEffect } from 'preact/hooks';
-=======
 import lagu from './assets/audio/lagu.mp3';
 import { useState, useEffect, useRef } from 'preact/hooks';
->>>>>>> main
+import { useEffect } from 'preact/hooks';
+
 
 // For this strictly structural integration phase, we wrap the vanilla mount
 // without altering the UI or logic to maintain identical CSS and user paths.
 
 export function App() {
-<<<<<<< HEAD
   useEffect(() => {
     // Dynamically load the legacy scripts ONLY after the Preact DOM wrapper has actually mounted!
     import('./assets/js/map.js').then(() => {
@@ -56,7 +54,6 @@ export function App() {
           <div class="modal-footer">
             Map memakai agregasi penuh untuk paket multi-lokasi &middot; KPI nasional tidak
             menduplikasi paket multi-lokasi
-=======
 
   /* =========================
      MUSIC SYSTEM
@@ -119,7 +116,6 @@ export function App() {
   }, [darkMode]);
 /* =========================
    LOAD LEGACY JS
-========================= */
 
 useEffect(() => {
   // Load map.js first so window.AuditMap is defined before app.js runs.
@@ -246,7 +242,6 @@ useEffect(() => {
 
           <div className="modal-footer">
             Map memakai agregasi penuh untuk paket multi-lokasi &middot; KPI nasional tidak menduplikasi paket multi-lokasi
->>>>>>> main
           </div>
         </div>
       </div>
