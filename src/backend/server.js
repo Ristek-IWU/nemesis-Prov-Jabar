@@ -93,6 +93,20 @@ db.exec(
   const server = app.listen(PORT, () => {
     console.log(`Dashboard backend listening on http://127.0.0.1:${PORT}`);
     console.log(`SQLite database: ${runtimeDbPath}`);
+const app = createApp(
+  
+);
+// @ts-ignore
+const server = app.listen(PORT, () => {
+  console.log(`Dashboard backend listening on http://127.0.0.1:${PORT}`);
+  console.log(`SQLite database: ${runtimeDbPath}`);
+});
+
+function shutdown(signal) {
+  console.log(`${signal} received, shutting down...`);
+  server.close(() => {
+    db.close();
+    process.exit(0);
   });
 
   function shutdown(signal) {

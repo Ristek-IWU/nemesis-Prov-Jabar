@@ -1,4 +1,5 @@
 import path from 'node:path';
+// @ts-ignore
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'node:url';
 
