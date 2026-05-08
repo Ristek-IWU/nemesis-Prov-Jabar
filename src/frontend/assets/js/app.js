@@ -20,6 +20,8 @@
     sortBy: 'waste',
     isLegendHidden: false,
     modalRequestId: 0,
+    // [EDITED: Tambahkan state untuk highlight daerah termaju]
+    highlightGarut: true, 
     modal: {
       areaType: 'region',
       areaKey: null,
@@ -74,7 +76,29 @@
   let dashboardData = null;
   let regionsByKey = new Map();
   let provincesByKey = new Map();
+  function getGarutTopRegion() {
+  if (!dashboardData || !dashboardData.regions) return null;
+  
+  // Mencari semua sub-daerah yang mengandung kata kunci daerah Garut
+  // atau yang memiliki parent 'Garut'
+  const garutAreas = dashboardData.regions.filter(r => {
+    const name = r.displayName.toLowerCase();
+    // Tambahkan list kecamatan garut yang ada di peta kamu
+    return name.includes('leles') || 
+           name.includes('selaawi') || 
+           name.includes('limbangan') || 
+           name.includes('malangbong') ||
+           name.includes('pangatikan') ||
+           name.includes('kadungora');
+  });
 
+  if (garutAreas.length === 0) return null;
+
+  // Urutkan untuk mencari yang paling kecil potensi pemborosannya (Termaju)
+  return garutAreas.reduce((prev, curr) => 
+    (Number(prev.totalPotentialWaste) < Number(curr.totalPotentialWaste)) ? prev : curr
+  );
+}
   function escapeHtml(value) {
     return String(value)
       .replace(/&/g, '&amp;')
@@ -438,10 +462,14 @@
       geo: payload.geo || { type: 'FeatureCollection', features: [] },
       regions: Array.isArray(payload.regions) ? payload.regions : [],
       provinceView: {
-        legend: (payload.provinceView && payload.provinceView.legend) || {
-          zeroColor: '#243155',
-          ranges: [],
-        },
+        legend: {
+      zeroColor: '#243155',
+      ranges: [
+        { min: 0, max: 999999999, color: '#4ade80', label: 'Aman (Hijau)' },
+        { min: 1000000000, max: 9999999999, color: '#ffcc00', label: 'Sedang (Kuning)' },
+        { min: 10000000000, max: Infinity, color: '#ff4d4d', label: 'Terbesar (Merah)' }
+      ]
+    },
         geo: (payload.provinceView && payload.provinceView.geo) || {
           type: 'FeatureCollection',
           features: [],
@@ -460,20 +488,24 @@
     };
   }
 
-  function getLegendColor(value) {
-    const legend = getActiveLegend();
+  // CARI KODE INI DAN GANTI:
+function getLegendColor(value) {
+  const legend = getActiveLegend();
+  if (!legend) return '#243155';
+  if (!value || value <= 0) return legend.zeroColor || '#243155';
 
-    if (!legend) {
-      return '#243155';
-    }
+  // ATUR AMBANG BATAS DI SINI (Misalnya dalam Rupiah)
+  const MILYAR = 1e9;
+  const TRILIUN = 1e12;
 
-    if (!value || value <= 0) {
-      return legend.zeroColor || '#243155';
-    }
-
-    const range = (legend.ranges || []).find((item) => value >= item.min && value <= item.max);
-    return range ? range.color : legend.ranges[legend.ranges.length - 1]?.color || '#a83c2e';
+  if (value >= 10 * MILYAR) {
+    return '#ff4d4d'; // MERAH: Sangat Besar (di atas 10M)
+  } else if (value >= 1 * MILYAR) {
+    return '#ffcc00'; // KUNING: Sedang (1M - 10M)
+  } else {
+    return '#4ade80'; // HIJAU: Aman/Kecil (di bawah 1M)
   }
+}
 
   function areaMatchesCurrentView(area) {
     if (!area) {
@@ -563,13 +595,15 @@
     });
   }
 
- function renderKpis() {
+  function renderKpis() {
     const summary = dashboardData.summary;
-    const mappedPackages = summary.totalPackages - summary.unmappedPackages;
-    
-    // Hitung angka efisiensi (1.28M)
-    const potentialSaving = calculateEfficiency(summary.totalPotentialWaste);
+    if (!summary) return; // Guard clause agar tidak error jika data kosong
 
+    const potentialSaving = calculateEfficiency(summary.totalPotentialWaste);
+    const topArea = getGarutTopRegion();
+    const cleanTopName = topArea ? topArea.displayName.replace(/Kabupaten|Garut|Kab\./gi, '').trim() : 'N/A';
+
+    // 3. Render Kartu KPI
     renderKpiCards([
       {
         label: 'Total Potensi Pemborosan',
@@ -577,10 +611,10 @@
         sublabel: 'Nilai nasional raw, tanpa duplikasi',
       },
       {
-        label: `Simulasi Efisiensi (${state.efficiencyRatio}%)`,
-        value: `Rp ${formatCompactCurrency(potentialSaving)}`,
-        sublabel: 'Potensi dana yang bisa diselamatkan',
-      },
+          label: `Simulasi Efisiensi (${state.efficiencyRatio}%)`,
+          value: `Rp ${formatCompactCurrency(potentialSaving)}`,
+          sublabel: `Termaju: ${cleanTopName}`, // Otomatis muncul di kartu atas
+        },
       {
         label: 'Paket Prioritas Audit',
         value: formatNumber(summary.totalPriorityPackages),
@@ -590,7 +624,7 @@
         label: 'Total Pagu Teraudit',
         value: `Rp ${formatCompactCurrency(summary.totalBudget)}`,
         sublabel: 'Akumulasi pagu dari seluruh audit',
-      },
+      }
     ]);
   }
 
@@ -659,38 +693,56 @@
   }
 
   function sortControl() {
-    const placeholder = isCentralOwnerMode()
-      ? 'Cari kementerian/lembaga...'
-      : isProvinceView()
-        ? 'Cari provinsi...'
-        : 'Cari kabupaten/kota...';
+    const placeholder = 'Cari kementerian/lembaga/daerah...';
 
-    return (
-      `<div class="efficiency-tool" style="margin-bottom:15px; padding:10px; background:rgba(74, 222, 128, 0.1); border-radius:8px; border:1px solid #4ade80;">` +
-      `<label style="font-size:11px; color:#4ade80; display:block; margin-bottom:5px;">SIMULASI EFISIENSI</label>` +
-      `<input type="range" min="1" max="50" value="10" style="width:100%" oninput="console.log('Persentase:', this.value)">` +
-      `</div>`+
-      `<div class="sw"><span class="si">&#128269;</span><input id="sidebarSearch" type="text" placeholder="${escapeAttr(
-        placeholder
-      )}" value="${escapeAttr(state.search)}" oninput="${actionExpr('dashboardActions.setSearch(this.value)')}" /></div>` +
-      `<div class="sort-bar"><label>Urutkan</label><select onchange="${actionExpr('dashboardActions.setSort(this.value)')}" aria-label="Urutkan area">` +
-      `<option value="waste"${state.sortBy === 'waste' ? ' selected' : ''}>Potensi Pemborosan</option>` +
-      `<option value="priority"${state.sortBy === 'priority' ? ' selected' : ''}>Paket Prioritas</option>` +
-      `<option value="packages"${state.sortBy === 'packages' ? ' selected' : ''}>Total Paket</option>` +
-      `<option value="budget"${state.sortBy === 'budget' ? ' selected' : ''}>Total Pagu</option>` +
-      `</select></div>`
-    );
+    // Slider DIHAPUS, diganti dengan Header Analisis Otomatis
+    return `
+      <div class="efficiency-tool" style="margin-bottom:15px; padding:12px; background:rgba(74, 222, 128, 0.1); border-radius:8px; border:1px solid #4ade80;">
+        <label style="font-size:12px; color:#4ade80; display:block; font-weight:bold; letter-spacing:0.5px;">📊 ANALISIS SISTEM OTOMATIS</label>
+        <div style="font-size:10px; color:var(--t3); margin-top:4px;">Mendeteksi performa wilayah secara real-time.</div>
+      </div>
+      <div class="sw">
+        <span class="si">&#128269;</span>
+        <input id="sidebarSearch" type="text" placeholder="${placeholder}" value="${state.search}" oninput="dashboardActions.setSearch(this.value)" />
+      </div>
+      <div class="sort-bar">
+        <label>Urutkan</label>
+        <select onchange="dashboardActions.setSort(this.value)">
+          <option value="waste" ${state.sortBy === 'waste' ? 'selected' : ''}>Potensi Pemborosan</option>
+          <option value="priority" ${state.sortBy === 'priority' ? 'selected' : ''}>Paket Prioritas</option>
+        </select>
+      </div>
+    `;
   }
 
   function renderSidebarContent(updateControls = true) {
-    if (!dashboardData) {
-      renderSidebarMessage('Data dashboard belum tersedia.', true);
-      return;
-    }
+  if (!dashboardData) return;
 
-    if (updateControls || !dom.sidebarContent.querySelector('.sw')) {
-      dom.sidebarContent.innerHTML = sortControl();
-    } else {
+  let garutInfoHtml = '';
+  const topArea = getGarutTopRegion(); 
+  
+  if (topArea) {
+    // Ambil nama asli tanpa embel-embel Kabupaten
+    const areaName = topArea.displayName.replace(/Kabupaten|Garut|Kab\./gi, '').trim();
+
+    garutInfoHtml = `
+      <div class="pi" style="border: 2px solid #4ade80; background: rgba(74, 222, 128, 0.08); margin-bottom: 15px; position: relative;">
+        <div style="position: absolute; top: 0; right: 0; background: #4ade80; color: #1a1a1a; font-size: 8px; padding: 2px 8px; font-weight: bold; border-bottom-left-radius: 8px;">DATA TERMAJU</div>
+        <div class="pit">
+          <div class="pn" style="color: #4ade80; font-weight: bold; font-size: 16px; text-transform: uppercase;">📍 ${escapeHtml(areaName)}</div>
+          <div class="tbd bk" style="background:#4ade80; color:#000">NOMOR 1</div>
+        </div>
+        <div style="font-size: 11px; color: var(--t2); margin-top: 8px; line-height: 1.4;">
+          Berdasarkan data audit terbaru, wilayah <b style="color:#4ade80">${escapeHtml(areaName)}</b> adalah yang paling efisien di Garut.
+          <div style="margin-top:4px;">Potensi Pemborosan: <strong style="color:#4ade80">Rp ${formatCompactCurrency(topArea.totalPotentialWaste)}</strong></div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (updateControls || !dom.sidebarContent.querySelector('.sw')) {
+    dom.sidebarContent.innerHTML = sortControl() + garutInfoHtml; 
+  }else {
       const children = Array.from(dom.sidebarContent.children);
       for (const child of children) {
         if (!child.classList.contains('sw') && !child.classList.contains('sort-bar')) {
@@ -795,6 +847,9 @@
   function featureStyle(feature) {
     const areaKey = getFeatureAreaKey(feature);
     const area = getActiveAreaByKey(areaKey);
+    const topGarut = getGarutTopRegion();
+
+    const isTopGarut = topGarut && areaKey === topGarut.regionKey;
     const visible = areaMatchesCurrentView(area);
     const selected = state.selectedAreaKey === areaKey;
     const strokeOpacity = (selected ? 1 : 0.2) * (visible ? 0.85 : 0.2);
@@ -802,8 +857,8 @@
     return {
       fillColor: area ? getLegendColor(area.totalPotentialWaste) : '#243155',
       fillOpacity: selected ? 0.72 : visible ? 0.52 : 0.08,
-      strokeColor: selected ? '#f0d8a8' : '#b5a882',
-      strokeWidth: selected ? 2.1 : 0.8,
+      strokeColor: isTopGarut ? '#4ade80' : (selected ? '#f0d8a8' : '#b5a882'),
+      strokeWidth: isTopGarut || selected ? 2.5 : 0.8,
       strokeOpacity,
     };
   }
