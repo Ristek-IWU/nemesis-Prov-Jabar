@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+=======
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
+
+>>>>>>> main
 window['AuditMap'] = (() => {
   const SOURCE = 'audit-areas';
   const FILL_LAYER = 'audit-fill';
@@ -40,17 +46,24 @@ window['AuditMap'] = (() => {
     }
   }
 
+<<<<<<< HEAD
   function computeBounds(geo, areaKey) {
+=======
+  function computeBounds(geo) {
+>>>>>>> main
     let minLng = Infinity,
       minLat = Infinity,
       maxLng = -Infinity,
       maxLat = -Infinity;
     let hasCoords = false;
     geo.features.forEach((f) => {
+<<<<<<< HEAD
       if (areaKey) {
         const fKey = f.properties.regionKey || f.properties.provinceKey;
         if (fKey !== areaKey) return;
       }
+=======
+>>>>>>> main
       if (!f.geometry) return;
       walkCoords(f.geometry, (lng, lat) => {
         hasCoords = true;
@@ -70,17 +83,34 @@ window['AuditMap'] = (() => {
 
   function ensureMap(container) {
     if (map) return;
+<<<<<<< HEAD
     map = new window['maplibregl'].Map({
       container,
       // Default awal ke Garut sebelum fitBounds jalan
       center: [107.9087, -7.2279], 
       zoom: 9,
+=======
+    map = new maplibregl.Map({
+      container,
+      center: [108.2207, -7.3506],
+      zoom: 10,
+>>>>>>> main
       minZoom: 4,
       maxZoom: 12,
       style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
     });
   }
 
+<<<<<<< HEAD
+=======
+  function closePopup() {
+    if (popup) {
+      popup.remove();
+      popup = null;
+    }
+  }
+
+>>>>>>> main
   function clearHover() {
     if (hoveredId !== null) {
       try {
@@ -90,10 +120,14 @@ window['AuditMap'] = (() => {
       }
       hoveredId = null;
     }
+<<<<<<< HEAD
     if (popup) {
       popup.remove();
       popup = null;
     }
+=======
+    closePopup();
+>>>>>>> main
   }
 
   function addLayers() {
@@ -124,6 +158,10 @@ window['AuditMap'] = (() => {
       },
     });
 
+<<<<<<< HEAD
+=======
+    // Hover highlight layers driven by feature-state
+>>>>>>> main
     map.addLayer({
       id: HOVER_FILL,
       type: 'fill',
@@ -152,6 +190,10 @@ window['AuditMap'] = (() => {
 
     map.on('mousemove', FILL_LAYER, (e) => {
       if (!e.features.length) return;
+<<<<<<< HEAD
+=======
+
+>>>>>>> main
       map.getCanvas().style.cursor = 'pointer';
       const feature = e.features[0];
       const id = feature.id;
@@ -167,7 +209,11 @@ window['AuditMap'] = (() => {
         const html = _getPopupHtml(areaKey);
         if (html) {
           if (!popup) {
+<<<<<<< HEAD
             popup = new window['maplibregl'].Popup({
+=======
+            popup = new maplibregl.Popup({
+>>>>>>> main
               closeButton: false,
               closeOnClick: false,
               maxWidth: '320px',
@@ -209,6 +255,7 @@ window['AuditMap'] = (() => {
       const styledGeo = buildStyledGeo(geo, options.getFeatureStyle);
       map.getSource(SOURCE).setData(styledGeo);
 
+<<<<<<< HEAD
       // OTOMATIS ZOOM KE GARUT
       if (options.fitBounds) {
         const bounds = computeBounds(geo, options.focusAreaKey);
@@ -220,6 +267,17 @@ window['AuditMap'] = (() => {
           });
         }
       }
+=======
+      // if (options.fitBounds) {
+      //   const bounds = computeBounds(geo);
+      //   if (bounds) {
+      //     map.fitBounds(bounds, {
+      //       padding: options.isProvinceView ? 80 : 50,
+      //       duration: 300,
+      //     });
+      //   }
+      // }
+>>>>>>> main
 
       if (onReady) onReady();
     };
@@ -240,4 +298,8 @@ window['AuditMap'] = (() => {
   return { render, refresh, closePopup: clearHover };
 })();
 
+<<<<<<< HEAD
 export {};
+=======
+export {};
+>>>>>>> main

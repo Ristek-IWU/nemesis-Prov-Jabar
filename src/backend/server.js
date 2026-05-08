@@ -107,4 +107,8 @@ function shutdown(signal) {
 }
 
 process.on('SIGINT', () => shutdown('SIGINT'));
+<<<<<<< HEAD
 process.on('SIGTERM', () => shutdown('SIGTERM'));
+=======
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+>>>>>>> main
