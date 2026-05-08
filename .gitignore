@@ -42,3 +42,5 @@ Thumbs.db
 
 # Others
 Review-1.md
+*.sqlite-shm
+*.sqlite-wal

@@ -779,8 +779,22 @@
 
     dom.sidebarContent.insertAdjacentHTML('beforeend', listHtml);
   }
-
+  // khusus jabar
   function featureStyle(feature) {
+    const isJabar = feature.properties.provinceName === 'Jawa Barat';
+
+    // matiin semua area selain jabar
+    if (!isJabar) {
+      return {
+        fillColor: 'transparent',
+        fillOpacity: 0,
+        strokeColor: 'transparent',
+        strokeWidth: 0,
+        strokeOpacity: 0,
+      };
+    }
+
+    
     const areaKey = getFeatureAreaKey(feature);
     const area = getActiveAreaByKey(areaKey);
     const visible = areaMatchesCurrentView(area);
@@ -803,16 +817,17 @@
 
     return {
       fillColor: area ? getLegendColor(area.totalPotentialWaste) : '#243155',
-      fillOpacity: selected ? 0.72 : visible ? 0.52 : 0.08,
+      fillOpacity: selected ? 0.8 : visible ? 0.6 : 0.1, 
       strokeColor: selected ? '#f0d8a8' : '#b5a882',
-      strokeWidth: selected ? 2.1 : 0.8,
+      strokeWidth: selected ? 2.1 : 1.0,
       strokeOpacity,
     };
   }
 
   function popupHtml(area) {
-    if (!area) {
-      return `<div class="pt">Belum ada data</div>`;
+    // Mencegah pop up untuk area selain jabar
+    if (!area || area.provinceName !== 'Jawa Barat') {
+      return ''; 
     }
 
     const isBogorKota =
@@ -2749,6 +2764,10 @@ function initMap() {
   renderGeoLayer(false); // <--- Ubah kata 'true' menjadi 'false' di sini
 }
 
+  function initMap() {
+    renderGeoLayer(false);
+  }
+
   function refreshMapStyles() {
     window['AuditMap'].refresh(getActiveGeo(), featureStyle);
   }
@@ -2809,6 +2828,151 @@ function initMap() {
   function renderRegionModalContent(payload) {
     const region = payload.region;
     const rowsHtml = renderPackageTableRows(payload.items);
+   if (region.regionKey === 'region-jawa-barat-kota-bandung') {
+
+    // perhitungan data untuk clipboard dan chart
+      const countAbsurd = region.severityCounts.absurd || 0;
+      const countHigh = region.severityCounts.high || 0;
+      const countMed = region.severityCounts.med || 0;
+      const countLow = Math.max(0, region.totalPackages - countAbsurd - countHigh - countMed);
+      const totalPkg = region.totalPackages || 1; 
+
+      const pctAbsurd = (countAbsurd / totalPkg) * 100;
+      const pctHigh = (countHigh / totalPkg) * 100;
+      const pctMed = (countMed / totalPkg) * 100;
+      const pctLow = (countLow / totalPkg) * 100;
+
+      const countKL = ownerTypeCount(region, 'central');
+      const countProv = ownerTypeCount(region, 'provinsi');
+      const countKot = ownerTypeCount(region, 'kabkota');
+      const countOther = ownerTypeCount(region, 'other');
+
+    // format teks laporan untuk clipboard
+      const waText = `📊 *Laporan Audit ${region.displayName} (TA 2026)*\n` +
+                     `Total Pagu: Rp ${formatCompactCurrency(region.totalBudget)}\n` +
+                     `Potensi Pemborosan: Rp ${formatCompactCurrency(region.totalPotentialWaste)}\n` +
+                     `Paket Prioritas: ${formatNumber(region.totalPriorityPackages)}\n` +
+                     `Total Paket: ${formatNumber(region.totalPackages)}\n\n` +
+                     `*Distribusi Pemilik:*\n` +
+                     `- Kementrian/Lembaga: ${formatNumber(countKL)}\n` +
+                     `- Pemprov: ${formatNumber(countProv)}\n` +
+                     `- Pemkot: ${formatNumber(countKot)}\n` +
+                     `- Others: ${formatNumber(countOther)}\n\n` +
+                     `*Distribusi Severity:*\n` +
+                     `- Low: ${formatNumber(countLow)}\n` +
+                     `- Med: ${formatNumber(countMed)}\n` +
+                     `- High: ${formatNumber(countHigh)}\n` +
+                     `- Absurd: ${formatNumber(countAbsurd)}\n\n` +
+                     `_Dihasilkan otomatis dari Dashboard Audit_`;
+      
+      // Header untuk kota bandung
+      dom.modalTop.innerHTML =
+        `<div class="modal-top-row"><div><h2>${escapeHtml(region.displayName)} </h2><div class="msub">${escapeHtml(
+          `${region.provinceName} | Sistem Deteksi Anomali Pengadaan TA 2026`
+        )}</div></div>` +
+        `<div style="display:flex;gap:8px;align-items:center"><span class="tbd ${areaBadgeClass(region)}">${escapeHtml(
+          region.regionType
+        )}</span><button class="modal-close" onclick="${actionCall(
+          'closeRegionModal'
+        )}">&#10005; Tutup</button></div></div>` +
+
+        // Copy ke Clipboard
+        `<button class="modal-close" style="color: var(--sage); border-color: var(--sage);" 
+        data-report="${escapeAttr(waText)}" onclick="navigator.clipboard.writeText(this.getAttribute('data-report'));
+        this.innerText='✅ Tersalin!'; setTimeout(()=>this.innerText='📋 Salin Laporan', 2000);">📋 Salin Laporan</button>` +
+       
+        `<div class="modal-kpis">` +
+        `<div class="mkp"><div class="mkp-l">Potensi Pemborosan</div><div class="mkp-v" style="color:var(--brick)">Rp ${escapeHtml(
+          formatCompactCurrency(region.totalPotentialWaste)
+        )}</div></div>` +
+        `<div class="mkp"><div class="mkp-l">Paket Prioritas</div><div class="mkp-v">${escapeHtml(
+          formatNumber(region.totalPriorityPackages)
+        )}</div></div>` +
+        `<div class="mkp"><div class="mkp-l">Total Paket</div><div class="mkp-v">${escapeHtml(
+          formatNumber(region.totalPackages)
+        )}</div></div>` +
+        `<div class="mkp"><div class="mkp-l">Total Pagu</div><div class="mkp-v" style="color:var(--sage)">Rp ${escapeHtml(
+          formatCompactCurrency(region.totalBudget)
+        )}</div></div></div>`;
+
+      
+
+      // body untuk kota bandung
+      dom.modalBody.innerHTML =
+        `<div class="modal-summary-grid">` +
+        `<div class="mini-stat"><span>Kementerian/Lembaga</span><strong>${escapeHtml(formatNumber(ownerTypeCount(region, 'central')))}</strong></div>` +
+        `<div class="mini-stat"><span>Pemprov</span><strong>${escapeHtml(formatNumber(ownerTypeCount(region, 'provinsi')))}</strong></div>` +
+        `<div class="mini-stat"><span>Pemkot</span><strong>${escapeHtml(formatNumber(ownerTypeCount(region, 'kabkota')))}</strong></div>` +
+        `<div class="mini-stat"><span>Others</span><strong>${escapeHtml(formatNumber(ownerTypeCount(region, 'other')))}</strong></div>` +
+        
+               // Diagram Batang Horizontal Severity
+        `<div class="mini-stat" style="grid-column: span 4; display: flex; flex-direction: column; gap: 10px;">` +
+        `<span style="color: var(--t2);">📊 Distribusi Tingkat Severity</span>` +
+        `<div style="display: flex; width: 100%; height: 16px; border-radius: 8px; overflow: hidden; background: var(--b1); border: 1px solid var(--bd);">` +
+        `<div style="width: ${pctLow}%; background: var(--steel);" title="Low: ${countLow}"></div>` +
+        `<div style="width: ${pctMed}%; background: var(--olive);" title="Medium: ${countMed}"></div>` +
+        `<div style="width: ${pctHigh}%; background: var(--brick);" title="High: ${countHigh}"></div>` +
+        `<div style="width: ${pctAbsurd}%; background: var(--rose);" title="Absurd: ${countAbsurd}"></div>` +
+        `</div>` +
+        `<div style="display: flex; justify-content: space-between; font-size: 10.5px; color: var(--t1); margin-top: 2px;">` +
+        `<div style="display: flex; align-items: center; gap: 6px;"><div style="width:10px;height:10px;border-radius:3px;background:var(--steel);"></div> Low: <strong>${formatNumber(countLow)}</strong></div>` +
+        `<div style="display: flex; align-items: center; gap: 6px;"><div style="width:10px;height:10px;border-radius:3px;background:var(--olive);"></div> Med: <strong>${formatNumber(countMed)}</strong></div>` +
+        `<div style="display: flex; align-items: center; gap: 6px;"><div style="width:10px;height:10px;border-radius:3px;background:var(--brick);"></div> High: <strong>${formatNumber(countHigh)}</strong></div>` +
+        `<div style="display: flex; align-items: center; gap: 6px;"><div style="width:10px;height:10px;border-radius:3px;background:var(--rose);"></div> Absurd: <strong>${formatNumber(countAbsurd)}</strong></div>` +
+        `</div>` +
+        `</div>` +
+        `</div>` +
+
+        // deteksi anomali khusus untuk kota bandung
+        `<div style="grid-column: span 4; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px;">` +
+        
+          // Makan/Minum
+          `<div class="pi" style="margin:0; border-left: 3px solid var(--brick);" onclick="${actionExpr("dashboardActions.setModalSearch('makan minum')")}">` +
+            `<div style="color:var(--t1); font-weight:bold; font-size:12.5px; margin-bottom:4px;">🍽️ Deteksi Makan & Minum</div>` +
+            `<div style="font-size:10px; color:var(--t3); line-height:1.4;">Auto-search paket penyediaan makanan/minuman rapat yang rawan indikasi mark-up.</div>` +
+          `</div>` +
+
+          // Perjalanan Dinas
+          `<div class="pi" style="margin:0; border-left: 3px solid var(--sage);" onclick="${actionExpr("dashboardActions.setModalSearch('perjalanan dinas')")}">` +
+            `<div style="color:var(--t1); font-weight:bold; font-size:12.5px; margin-bottom:4px;">✈️ Detektor Perjalanan Dinas</div>` +
+            `<div style="font-size:10px; color:var(--t3); line-height:1.4;">Auto-search paket kunjungan kerja atau rapat koordinasi di luar kota.</div>` +
+          `</div>` +
+
+          // ATK
+          `<div class="pi" style="margin:0; border-left: 3px solid var(--olive);" onclick="${actionExpr("dashboardActions.setModalSearch('alat tulis')")}">` +
+            `<div style="color:var(--t1); font-weight:bold; font-size:12.5px; margin-bottom:4px;">📎 Deteksi ATK & Cetak</div>` +
+            `<div style="font-size:10px; color:var(--t3); line-height:1.4;">Auto-search pengadaan alat tulis kantor & penggandaan dokumen dinas.</div>` +
+          `</div>` +
+
+          // Honorarium
+          `<div class="pi" style="margin:0; border-left: 3px solid var(--steel);" onclick="${actionExpr("dashboardActions.setModalSearch('honor')")}">` +
+            `<div style="color:var(--t1); font-weight:bold; font-size:12.5px; margin-bottom:4px;">💸 Detektor Honorarium</div>` +
+            `<div style="font-size:10px; color:var(--t3); line-height:1.4;">Auto-search paket pembayaran honor narasumber atau tim pelaksana.</div>` +
+          `</div>` +
+
+        `</div>` +
+        `</div>` +
+
+        // filter bar (Ditambah tombol Reset)
+        `<div class="modal-filters" style="background: var(--b1); padding: 10px; border-radius: 8px; border: 1px solid var(--bd);">` +
+        `<input id="modalSearch" type="text" placeholder="Cari paket, lembaga, satker..." value="${escapeAttr(state.modal.search)}" oninput="${actionExpr('dashboardActions.setModalSearch(this.value)')}" />` +
+        `<select onchange="${actionExpr('dashboardActions.setModalOwnerType(this.value)')}">` +
+        `<option value="">Semua Pemilik</option><option value="central"${state.modal.ownerType === 'central' ? ' selected' : ''}>Kementerian/Lembaga</option><option value="provinsi"${state.modal.ownerType === 'provinsi' ? ' selected' : ''}>Pemprov</option><option value="kabkota"${state.modal.ownerType === 'kabkota' ? ' selected' : ''}>Pemkot</option><option value="other"${state.modal.ownerType === 'other' ? ' selected' : ''}>Others</option></select>` +
+        `<select onchange="${actionExpr('dashboardActions.setModalSeverity(this.value)')}">${renderSeverityFilterOptions(state.modal.severity)}</select>` +
+        `<label class="chk"><input type="checkbox" ${state.modal.priorityOnly ? 'checked' : ''} onchange="${actionExpr('dashboardActions.setModalPriorityOnly(this.checked)')}" /> Hanya prioritas</label>` +
+        // Tombol Reset Pencarian
+        `<button onclick="${actionExpr("dashboardActions.setModalSearch('')")}" style="background: transparent; border: 1px solid var(--t3); color: var(--t2); padding: 8px 12px; border-radius: 7px; cursor: pointer; font-size: 10.5px; font-weight: 600; margin-left: auto;">HAPUS</button>` +
+        `</div>` +
+
+        // 4. TABEL DATA
+        `<div class="modal-cnt">Menampilkan ${escapeHtml(formatNumber(payload.items.length))} dari ${escapeHtml(formatNumber(payload.pagination.totalItems))} paket pada area ini</div>` +
+        `<table class="rtbl"><thead><tr><th>ID</th><th>Nama Paket</th><th>Pemilik</th><th>Satker / Lokasi</th><th>Pagu</th><th>Severity</th><th>Alasan</th></tr></thead><tbody>${rowsHtml}</tbody></table>` +
+        renderPagination(payload.pagination);
+
+      return;
+    
+    }
+    // akhir buat kota bandung
 
     dom.modalTop.innerHTML =
       `<div class="modal-top-row"><div><h2>${escapeHtml(region.displayName)}</h2><div class="msub">${escapeHtml(
@@ -3082,6 +3246,12 @@ function initMap() {
   }
 
   function openAreaModal(areaKey) {
+    const area = getActiveAreaByKey(areaKey);
+    
+    // biar selain jabar gabisa diklik
+    if (area && area.provinceName !== 'Jawa Barat') {
+      return; 
+    }
     window['AuditMap'].closePopup();
     state.selectedAreaKey = areaKey;
     state.selectedOwnerKey = null;

@@ -104,6 +104,8 @@ window['AuditMap'] = (() => {
       center: [108.2207, -7.3506],
       zoom: 10,
 >>>>>>> main
+      center: [107.60, -6.90],
+      zoom: 7.5,
       minZoom: 4,
       maxZoom: 12,
       style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
