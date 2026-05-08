@@ -999,7 +999,7 @@
 
       options: {
         responsive: true,
-
+maintainAspectRatio: false,
         plugins: {
           legend: {
             labels: {
@@ -1055,7 +1055,7 @@
 
       options: {
         responsive: true,
-
+maintainAspectRatio: false,
         plugins: {
           legend: {
             labels: {
