@@ -44,41 +44,28 @@ window['AuditMap'] = (() => {
   }
 
   function computeBounds(geo) {
-    let minLng = Infinity,
-      minLat = Infinity,
-      maxLng = -Infinity,
-      maxLat = -Infinity;
-    let hasCoords = false;
-    geo.features.forEach((f) => {
-      if (!f.geometry) return;
-      walkCoords(f.geometry, (lng, lat) => {
-        hasCoords = true;
-        if (lng < minLng) minLng = lng;
-        if (lat < minLat) minLat = lat;
-        if (lng > maxLng) maxLng = lng;
-        if (lat > maxLat) maxLat = lat;
-      });
-    });
-    return hasCoords
-      ? [
-          [minLng, minLat],
-          [maxLng, maxLat],
-        ]
-      : null;
+    // Kita kunci koordinatnya khusus buat Sumedang
+    const sumedangBounds = [
+      [107.7241, -7.0392], // Titik Barat Daya
+      [108.1364, -6.6575]  // Titik Timur Laut
+    ];
+    
+    return sumedangBounds;
   }
 
   function ensureMap(container) {
     if (map) return;
     map = new maplibregl.Map({
       container,
-      center: [118, -2.5],
-      zoom: 5,
-      minZoom: 4,
-      maxZoom: 12,
+      // Titik tengah Kabupaten Sumedang
+      center: [107.9189, -6.8589], 
+      // Zoom level 10 biar pas satu kabupaten kelihatan semua
+      zoom: 10,
+      minZoom: 8, 
+      maxZoom: 15,
       style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
     });
   }
-
   function closePopup() {
     if (popup) {
       popup.remove();
