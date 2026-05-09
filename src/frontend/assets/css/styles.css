@@ -1298,7 +1298,7 @@ body:not(.dark) button {
 
 body:not(.dark) button:hover {
   background: #f8fafc;
-}@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+}
 :root {
   --b0: #111d35;
   --b1: #162040;

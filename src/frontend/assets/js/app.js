@@ -597,7 +597,7 @@
     const legend = getActiveLegend();
     const title = isProvinceView()
       ? 'Potensi Pemborosan Paket'
-      : 'Deteksi Anomali Pengadaan - Sumedang';
+      : 'Deteksi Anomali Pengadaan - Jawa Barat';
     const zeroLabel = isProvinceView()
       ? 'Tidak ada paket pemprov terdeteksi'
       : 'Tidak ada potensi terdeteksi';
@@ -781,7 +781,7 @@
   }
   // khusus jabar
   function featureStyle(feature) {
-    const isJabar = feature.properties.provinceName === 'Jawa Barat';
+    const isJabar = (feature.properties.provinceName || '').toLowerCase().includes('jawa barat');
 
     // matiin semua area selain jabar
     if (!isJabar) {
@@ -794,64 +794,27 @@
       };
     }
 
-    
     const areaKey = getFeatureAreaKey(feature);
     const area = getActiveAreaByKey(areaKey);
     const visible = areaMatchesCurrentView(area);
     const selected = state.selectedAreaKey === areaKey;
 
-    const isBogorKota =
-      area && typeof area.displayName === 'string' && area.displayName === 'Kota Bogor';
-
     const strokeOpacity = (selected ? 1 : 0.2) * (visible ? 0.85 : 0.2);
-
-    if (isBogorKota && !selected) {
-      return {
-        fillColor: area ? getLegendColor(area.totalPotentialWaste) : '#243155',
-        fillOpacity: visible ? 0.62 : 0.12,
-        strokeColor: '#f0d8a8',
-        strokeWidth: 2.0,
-        strokeOpacity: (visible ? 0.95 : 0.25),
-      };
-    }
 
     return {
       fillColor: area ? getLegendColor(area.totalPotentialWaste) : '#243155',
-      fillOpacity: selected ? 0.8 : visible ? 0.6 : 0.1, 
+      fillOpacity: selected ? 0.8 : (visible ? 0.6 : 0.1), 
       strokeColor: selected ? '#f0d8a8' : '#b5a882',
       strokeWidth: selected ? 2.1 : 1.0,
       strokeOpacity,
     };
-  const areaKey = getFeatureAreaKey(feature);
-  const area = getActiveAreaByKey(areaKey);
-  const visible = areaMatchesCurrentView(area);
-  const selected = state.selectedAreaKey === areaKey;
-
-const isKotaBekasi = feature.properties.displayName?.toUpperCase() === 'KOTA BEKASI' || 
-                     feature.properties.regionKey === '3275';
-
-return {
-  // 1. Highlight Isi Wilayah
-  // Ganti isBekasi jadi isKotaBekasi di bawah ini:
-  fillColor: isKotaBekasi ? '#ffeb3b' : (selected ? '#f0d8a8' : (area ? getLegendColor(area.totalPotentialWaste) : '#243155')),
-  fillOpacity: isKotaBekasi ? 0.9 : (selected ? 0.72 : (visible ? 0.52 : 0.08)),
-
-  // 2. Garis Pembatas (Warna & Ketebalan)
-  // Ganti isBekasi jadi isKotaBekasi di bawah ini:
-  strokeColor: isKotaBekasi ? '#00ff00' : (selected ? '#ffffff' : '#b5a882'),
-  strokeWidth: isKotaBekasi ? 5.0 : (selected ? 2.5 : 0.8),
-  strokeOpacity: isKotaBekasi || selected ? 1 : 0.2,
-};
   }
 
   function popupHtml(area) {
     // Mencegah pop up untuk area selain jabar
-    if (!area || area.provinceName !== 'Jawa Barat') {
+    if (!area || !(area.provinceName || '').toLowerCase().includes('jawa barat')) {
       return ''; 
     }
-
-    const isBogorKota =
-      typeof area.displayName === 'string' && area.displayName === 'Kota Bogor';
 
     if (isProvinceView()) {
       return (
@@ -878,44 +841,6 @@ return {
             ? Math.round((area.totalPriorityPackages / Math.max(area.totalPackages, 1)) * 100)
             : 0
         )}%;background:${escapeAttr(getLegendColor(area.totalPotentialWaste))}"></div></div>`
-      );
-    }
-
-    if (isBogorKota) {
-      return (
-        `<div class="pt">${escapeHtml(area.displayName)}</div>` +
-        `<div class="popup-sub">${escapeHtml(area.provinceName)} &middot; Insight</div>` +
-        `<div class="pr"><span class="l">Fokus Potensi</span><span class="v" style="color:#b5a882">Rp ${escapeHtml(
-          formatCompactCurrency(area.totalPotentialWaste)
-        )}</span></div>` +
-        `<div class="pr"><span class="l">Paket Prioritas</span><span class="v">${escapeHtml(
-          formatNumber(area.totalPriorityPackages)
-        )}</span></div>` +
-        `<div class="pr"><span class="l">Total Paket</span><span class="v">${escapeHtml(
-          formatNumber(area.totalPackages)
-        )}</span></div>` +
-        `<div class="pr"><span class="l">Sinyal Prioritas</span><span class="v">${escapeHtml(
-          Math.round(
-            (area.totalPriorityPackages /
-              Math.max(area.totalPackages, 1))
-              * 100
-          )
-        )}%</span></div>` +
-        `<div class="pr"><span class="l">Pemilik dominan</span><span class="v">${escapeHtml(
-          area.dominantOwnerType
-            ? ownerTypeLabel(area.dominantOwnerType)
-            : '—'
-        )}</span></div>` +
-        `<div class="ppb"><div class="ppbf" style="width:${Math.min(
-          100,
-          area.totalPriorityPackages > 0
-            ? Math.round((area.totalPriorityPackages / Math.max(area.totalPackages, 1)) * 100)
-            : 0
-        )}%;background:${escapeAttr(getLegendColor(area.totalPotentialWaste))}"></div></div>` +
-        `<div class="bogor-insight">
-          Kota Bogor menunjukkan <strong>indikasi potensi pemborosan</strong> yang layak diprioritaskan,
-          terutama pada paket dengan proporsi prioritas yang tinggi.
-        </div>`
       );
     }
 
@@ -948,8 +873,66 @@ return {
         area.totalPriorityPackages > 0
           ? Math.round((area.totalPriorityPackages / Math.max(area.totalPackages, 1)) * 100)
           : 0
-      )}%;background:${escapeAttr(getLegendColor(area.totalPotentialWaste))}"></div></div>`
+        )}%;background:${escapeAttr(getLegendColor(area.totalPotentialWaste))}"></div></div>`
     );
+  }
+
+  // Koordinat tengah Kabupaten Bandung
+  const KAB_BANDUNG_LNGLAT = [107.5732, -7.0397];
+
+  function isBandungKabRegion(area) {
+    if (!area) return false;
+    const name = (area.displayName || area.regionName || '').toLowerCase().trim();
+    const key  = (area.regionKey || '').toLowerCase();
+    return (
+      (name === 'kabupaten bandung' || name === 'bandung') &&
+      area.regionType === 'Kabupaten' &&
+      (
+        (area.provinceName || '').toLowerCase().includes('jawa barat') ||
+        key.includes('bandung')
+      ) &&
+      !name.includes('barat')   // exclude Kabupaten Bandung Barat
+    );
+  }
+
+  function getBandungKabGeoFeatures() {
+    const geo = dashboardData && dashboardData.geo;
+    if (!geo || !Array.isArray(geo.features)) return [];
+    // Collect all regionKeys that match Kab Bandung
+    const bandungKeys = new Set(
+      (dashboardData.regions || [])
+        .filter(isBandungKabRegion)
+        .map((r) => r.regionKey)
+    );
+    if (!bandungKeys.size) {
+      // Fallback: match by feature properties directly
+      return geo.features.filter((f) => {
+        const props = f.properties || {};
+        const name = (props.regionName || props.displayName || props.name || '').toLowerCase().trim();
+        const key  = (props.regionKey || '').toLowerCase();
+        return (
+          (name === 'kabupaten bandung' || name === 'bandung') &&
+          !name.includes('barat') &&
+          (key.includes('bandung') && !key.includes('barat'))
+        );
+      });
+    }
+    return geo.features.filter((f) => bandungKeys.has((f.properties || {}).regionKey));
+  }
+
+  function activateBandungZone() {
+    const AM = window['AuditMap'];
+    if (!AM) return;
+    const features = getBandungKabGeoFeatures();
+    if (features.length) {
+      AM.setFocusZone(features);
+      AM.zoomToFeatures(features, 80);
+    } else {
+      // Fallback: flyTo koordinat tengah Kab. Bandung langsung via map
+      // karena zoomToFeatures butuh features
+      console.warn('Bandung GeoJSON features not found, fallback flyTo');
+      AM.flyToBandungFallback && AM.flyToBandungFallback();
+    }
   }
 
   function renderGeoLayer(fitToBounds) {
@@ -976,6 +959,26 @@ return {
 
   function initMap() {
     renderGeoLayer(true);
+
+    // Force fit bounds setelah render pertama kali untuk memastikan zoom ke Jabar
+    setTimeout(() => {
+      const geo = getActiveGeo();
+      if (geo && geo.features && geo.features.length) {
+        window['AuditMap'].zoomToFeatures(geo.features, 70);
+      }
+    }, 1200);
+
+    const tryAddMarker = () => {
+      if (!window['AuditMap'] || !window['AuditMap'].addFocusMarker) return;
+      window['AuditMap'].addFocusMarker(
+        KAB_BANDUNG_LNGLAT,
+        'Kabupaten Bandung',
+        'Klik untuk zoom ke wilayah ini',
+        activateBandungZone
+      );
+    };
+
+    setTimeout(tryAddMarker, 800);
   }
 
   function refreshMapStyles() {

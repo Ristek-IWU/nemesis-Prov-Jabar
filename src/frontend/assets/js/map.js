@@ -1,9 +1,6 @@
-<<<<<<< HEAD
-=======
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
->>>>>>> main
 window['AuditMap'] = (() => {
   const SOURCE = 'audit-areas';
   const FILL_LAYER = 'audit-fill';
@@ -48,24 +45,18 @@ window['AuditMap'] = (() => {
     }
   }
 
-<<<<<<< HEAD
   function computeBounds(geo, areaKey) {
-=======
-  function computeBounds(geo) {
->>>>>>> main
     let minLng = Infinity,
       minLat = Infinity,
       maxLng = -Infinity,
       maxLat = -Infinity;
     let hasCoords = false;
+
     geo.features.forEach((f) => {
-<<<<<<< HEAD
       if (areaKey) {
         const fKey = f.properties.regionKey || f.properties.provinceKey;
         if (fKey !== areaKey) return;
       }
-=======
->>>>>>> main
       if (!f.geometry) return;
       walkCoords(f.geometry, (lng, lat) => {
         hasCoords = true;
@@ -75,88 +66,29 @@ window['AuditMap'] = (() => {
         if (lat > maxLat) maxLat = lat;
       });
     });
+
     return hasCoords
       ? [
           [minLng, minLat],
           [maxLng, maxLat],
         ]
       : null;
-    // Kita kunci koordinatnya khusus buat Sumedang
-    const sumedangBounds = [
-      [107.7241, -7.0392], // Titik Barat Daya
-      [108.1364, -6.6575]  // Titik Timur Laut
-    ];
-    
-    return sumedangBounds;
   }
-// ganti kode berikut dengan kode yang sudah diperbarui
-// di ganti oleh kelompok 7
 
   function ensureMap(container) {
     if (map) return;
-<<<<<<< HEAD
-    map = new window['maplibregl'].Map({
-      container,
-      // Default awal ke Garut sebelum fitBounds jalan
-      center: [107.9087, -7.2279], 
-      zoom: 9,
-=======
+
     map = new maplibregl.Map({
       container,
-      center: [108.2207, -7.3506],
-      zoom: 10,
->>>>>>> main
-      center: [107.60, -6.90],
-      zoom: 7.5,
+      // Default center to West Java
+      center: [107.7098, -6.9175],
+      zoom: 8.5,
       minZoom: 4,
-      maxZoom: 12,
-      style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-    });
-  }
- function ensureMap(container) {
-  if (map) return;
-
-  map = new window['maplibregl'].Map({
-    container,
-    center: [118, -2.5],
-    zoom: 5,
-    minZoom: 4,
-    maxZoom: 12,
-    style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-  });
-
-  // Marker Purwakarta
-  const purwakartaMarker = new window['maplibregl'].Marker({
-    color: '#ff0000'
-  })
-    .setLngLat([107.443, -6.556])
-    .setPopup(
-  new window['maplibregl'].Popup().setHTML(
-    `
-      <h3 style="color: purple; margin-bottom: 5px;">
-        Purwakarta
-      </h3>
-
-      <p style="color: purple; font-weight: bold;">
-        Wilayah Fokus Kelompok 7
-      </p>
-    `
-  )
-)
-    .addTo(map);
-}
-
-<<<<<<< HEAD
-=======
-      // Titik tengah Kabupaten Sumedang
-      center: [107.9189, -6.8589], 
-      // Zoom level 10 biar pas satu kabupaten kelihatan semua
-      zoom: 10,
-      minZoom: 8, 
       maxZoom: 15,
       style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
     });
   }
+
   function closePopup() {
     if (popup) {
       popup.remove();
@@ -164,7 +96,6 @@ window['AuditMap'] = (() => {
     }
   }
 
->>>>>>> main
   function clearHover() {
     if (hoveredId !== null) {
       try {
@@ -174,14 +105,7 @@ window['AuditMap'] = (() => {
       }
       hoveredId = null;
     }
-<<<<<<< HEAD
-    if (popup) {
-      popup.remove();
-      popup = null;
-    }
-=======
     closePopup();
->>>>>>> main
   }
 
   function addLayers() {
@@ -212,10 +136,6 @@ window['AuditMap'] = (() => {
       },
     });
 
-<<<<<<< HEAD
-=======
-    // Hover highlight layers driven by feature-state
->>>>>>> main
     map.addLayer({
       id: HOVER_FILL,
       type: 'fill',
@@ -260,29 +180,24 @@ window['AuditMap'] = (() => {
 
     map.on('mousemove', FILL_LAYER, (e) => {
       if (!e.features.length) return;
-<<<<<<< HEAD
-=======
 
->>>>>>> main
       map.getCanvas().style.cursor = 'pointer';
       const feature = e.features[0];
       const id = feature.id;
       const props = feature.properties;
 
-      // <<< UBAH DI SINI: Logika pengecekan Cimahi yang lebih fleksibel
-      const isCimahi = (props.KADMKK && props.KADMKK.toUpperCase().includes("CIMAHI")) || 
-                       (props.regionKey && props.regionKey.toLowerCase().includes("cimahi"));
+      if (hoveredId !== null && hoveredId !== id) {
+        map.setFeatureState({ source: SOURCE, id: hoveredId }, { hover: false });
+      }
+      hoveredId = id;
+      map.setFeatureState({ source: SOURCE, id: id }, { hover: true });
 
-      if (_getPopupHtml && feature.properties) {
-        const areaKey = getFeatureAreaKey(feature.properties);
+      if (_getPopupHtml && props) {
+        const areaKey = getFeatureAreaKey(props);
         const html = _getPopupHtml(areaKey);
         if (html) {
           if (!popup) {
-<<<<<<< HEAD
-            popup = new window['maplibregl'].Popup({
-=======
             popup = new maplibregl.Popup({
->>>>>>> main
               closeButton: false,
               closeOnClick: false,
               maxWidth: '320px',
@@ -291,33 +206,7 @@ window['AuditMap'] = (() => {
             });
           }
           popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
-      if (isCimahi) {
-        map.getCanvas().style.cursor = 'pointer';
-        if (hoveredId !== null && hoveredId !== id) {
-          map.setFeatureState({ source: SOURCE, id: hoveredId }, { hover: false });
         }
-        hoveredId = id;
-        map.setFeatureState({ source: SOURCE, id: id }, { hover: true });
-
-        if (_getPopupHtml && props) {
-          const areaKey = getFeatureAreaKey(props);
-          const html = _getPopupHtml(areaKey);
-          if (html) {
-            if (!popup) {
-              popup = new window['maplibregl'].Popup({
-                closeButton: false,
-                closeOnClick: false,
-                maxWidth: '320px',
-                className: 'audit-popup',
-                offset: 12,
-              });
-            }
-            popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
-          }
-        }
-      } else {
-        map.getCanvas().style.cursor = '';
-        clearHover();
       }
     });
 
@@ -331,21 +220,15 @@ window['AuditMap'] = (() => {
       const feature = e.features[0];
       const props = feature.properties;
 
-      // <<< UBAH DI SINI: Samakan logika klik dengan mousemove
-      const isCimahi = (props.KADMKK && props.KADMKK.toUpperCase().includes("CIMAHI")) || 
-                       (props.regionKey && props.regionKey.toLowerCase().includes("cimahi"));
-
-      if (isCimahi) {
-        const id = feature.id;
-        if (selectedId !== null) {
-          map.setFeatureState({ source: SOURCE, id: selectedId }, { selected: false });
-        }
-        selectedId = id;
-        map.setFeatureState({ source: SOURCE, id: id }, { selected: true });
-
-        const areaKey = getFeatureAreaKey(props);
-        if (_onAreaClick) _onAreaClick(areaKey);
+      const id = feature.id;
+      if (selectedId !== null) {
+        map.setFeatureState({ source: SOURCE, id: selectedId }, { selected: false });
       }
+      selectedId = id;
+      map.setFeatureState({ source: SOURCE, id: id }, { selected: true });
+
+      const areaKey = getFeatureAreaKey(props);
+      if (_onAreaClick) _onAreaClick(areaKey);
     });
   }
 
@@ -365,58 +248,17 @@ window['AuditMap'] = (() => {
 
       const styledGeo = buildStyledGeo(geo, options.getFeatureStyle);
       map.getSource(SOURCE).setData(styledGeo);
-      // Tambahkan di baris 212 (di bawah setData)
-// Tambahkan di baris 213-219 (di dalam blok if !options.isProvinceView)
-if (!options.isProvinceView) {
-    // Membuat popup dengan gaya kustom
-    const popup = new window['maplibregl'].Popup({ offset: 25, closeButton: false })
-        .setHTML('<b style="color: #fd599d; font-size: 15px;">Kota Bekasi</b><br><span style="color: #fd599d;">Wilayah Fokus Kelompok 8</span>');
 
-<<<<<<< HEAD
-      // OTOMATIS ZOOM KE GARUT
-    // Menambahkan marker merah dan menempelkan popup-nya
-    new window['maplibregl'].Marker({ color: '#FF0000' })
-        .setLngLat([106.9924, -6.2383])
-        .setPopup(popup)
-        .addTo(map)
-        .togglePopup(); // Agar langsung terbuka otomatis
-}
       if (options.fitBounds) {
         const bounds = computeBounds(geo, options.focusAreaKey);
         if (bounds) {
           map.fitBounds(bounds, {
-            padding: 50,
-            duration: 2000, // Durasi zoom in 2 detik
-            essential: true
-        const cimahiOnly = {
-          ...geo,
-          features: geo.features.filter((f) => {
-            const p = f.properties;
-            // <<< UBAH DI SINI: Agar zoom otomatis (fitBounds) juga bekerja
-            return (p.KADMKK && p.KADMKK.toUpperCase().includes("CIMAHI")) || 
-                   (p.regionKey && p.regionKey.toLowerCase().includes("cimahi"));
-          }),
-        };
-
-        const bounds = computeBounds(cimahiOnly);
-        if (bounds) {
-          map.fitBounds(bounds, {
-            padding: 100,
+            padding: options.isProvinceView ? 80 : 50,
             duration: 1000,
+            essential: true
           });
         }
       }
-=======
-      // if (options.fitBounds) {
-      //   const bounds = computeBounds(geo);
-      //   if (bounds) {
-      //     map.fitBounds(bounds, {
-      //       padding: options.isProvinceView ? 80 : 50,
-      //       duration: 300,
-      //     });
-      //   }
-      // }
->>>>>>> main
 
       if (onReady) onReady();
     };
@@ -434,12 +276,170 @@ if (!options.isProvinceView) {
     map.getSource(SOURCE).setData(buildStyledGeo(geo, getFeatureStyle));
   }
 
-  return { render, refresh, closePopup: clearHover };
+  const FOCUS_SOURCE = 'focus-zone';
+  const FOCUS_FILL_LAYER = 'focus-zone-fill';
+  const FOCUS_LINE_LAYER = 'focus-zone-line';
+
+  let _focusMarker = null;
+  let _focusMarkerPopup = null;
+
+  function ensureFocusLayers() {
+    if (map.getSource(FOCUS_SOURCE)) return;
+    map.addSource(FOCUS_SOURCE, {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] },
+    });
+    // Subtle glow fill
+    map.addLayer({
+      id: FOCUS_FILL_LAYER,
+      type: 'fill',
+      source: FOCUS_SOURCE,
+      paint: {
+        'fill-color': '#e8315a',
+        'fill-opacity': 0.12,
+      },
+    });
+    // Bold animated-like border
+    map.addLayer({
+      id: FOCUS_LINE_LAYER,
+      type: 'line',
+      source: FOCUS_SOURCE,
+      paint: {
+        'line-color': '#e8315a',
+        'line-width': 2.8,
+        'line-opacity': 0.9,
+        'line-dasharray': [2, 1],
+      },
+    });
+  }
+
+  function setFocusZone(geoFeatures) {
+    if (!map) return;
+    const applyZone = () => {
+      ensureFocusLayers();
+      map.getSource(FOCUS_SOURCE).setData({
+        type: 'FeatureCollection',
+        features: geoFeatures,
+      });
+    };
+    if (map.isStyleLoaded()) {
+      applyZone();
+    } else {
+      map.once('load', applyZone);
+    }
+  }
+
+  function clearFocusZone() {
+    if (!map || !map.getSource(FOCUS_SOURCE)) return;
+    map.getSource(FOCUS_SOURCE).setData({ type: 'FeatureCollection', features: [] });
+  }
+
+  function addFocusMarker(lngLat, title, subtitle, onClickZoom) {
+    if (_focusMarker) { _focusMarker.remove(); _focusMarker = null; }
+    if (_focusMarkerPopup) { _focusMarkerPopup.remove(); _focusMarkerPopup = null; }
+    if (!map) return;
+
+    const el = document.createElement('div');
+    el.style.cssText = [
+      'width:34px',
+      'height:40px',
+      'cursor:pointer',
+      'position:relative',
+    ].join(';');
+
+    const pin = document.createElement('div');
+    pin.style.cssText = [
+      'width:26px',
+      'height:26px',
+      'border-radius:50% 50% 50% 0',
+      'background:#e8315a',
+      'border:3px solid #fff',
+      'box-shadow:0 2px 8px rgba(0,0,0,.55)',
+      'transform:rotate(-45deg)',
+      'transform-origin:center center',
+      'transition:transform .15s, box-shadow .15s',
+      'position:absolute',
+      'top:0',
+      'left:4px',
+    ].join(';');
+
+    el.appendChild(pin);
+
+    el.addEventListener('mouseenter', () => {
+      pin.style.transform = 'rotate(-45deg) scale(1.2)';
+      pin.style.boxShadow = '0 4px 14px rgba(232,49,90,.6)';
+    });
+    el.addEventListener('mouseleave', () => {
+      pin.style.transform = 'rotate(-45deg) scale(1)';
+      pin.style.boxShadow = '0 2px 8px rgba(0,0,0,.55)';
+    });
+
+    _focusMarker = new maplibregl.Marker({ element: el, anchor: 'top' })
+      .setLngLat(lngLat)
+      .addTo(map);
+
+    _focusMarkerPopup = new maplibregl.Popup({
+      closeButton: true,
+      closeOnClick: false,
+      maxWidth: '220px',
+      className: 'audit-popup focus-popup',
+      offset: [0, -32],
+    })
+      .setLngLat(lngLat)
+      .setHTML(
+        '<div style="font-weight:700;font-size:13px;color:#111;margin-bottom:3px">' + title + '</div>' +
+        '<div style="font-size:11px;color:#555;margin-bottom:6px">' + (subtitle || '') + '</div>' +
+        '<div style="font-size:10px;color:#e8315a;cursor:pointer;font-weight:600;padding:4px 0" id="focusZoomBtn">&#128269; Zoom ke wilayah ini</div>'
+      )
+      .addTo(map);
+
+    if (onClickZoom) {
+      setTimeout(() => {
+        const btn = document.getElementById('focusZoomBtn');
+        if (btn) {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            onClickZoom();
+          });
+        }
+      }, 50);
+    }
+
+    _focusMarkerPopup.on('open', () => {
+      setTimeout(() => {
+        const btn = document.getElementById('focusZoomBtn');
+        if (btn && onClickZoom) {
+          const newBtn = btn.cloneNode(true);
+          btn.parentNode.replaceChild(newBtn, btn);
+          newBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            onClickZoom();
+          });
+        }
+      }, 50);
+    });
+
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (onClickZoom) onClickZoom();
+    });
+  }
+
+  function zoomToFeatures(features, padding) {
+    if (!map || !features.length) return;
+    const geo = { type: 'FeatureCollection', features };
+    const bounds = computeBounds(geo);
+    if (bounds) {
+      map.fitBounds(bounds, { padding: padding || 60, duration: 700 });
+    }
+  }
+
+  function flyToBandungFallback() {
+    if (!map) return;
+    map.flyTo({ center: [107.5732, -7.0397], zoom: 11, duration: 700 });
+  }
+
+  return { render, refresh, closePopup: clearHover, addFocusMarker, setFocusZone, clearFocusZone, zoomToFeatures, flyToBandungFallback };
 })();
 
-<<<<<<< HEAD
-export {};
-=======
-export {};
->>>>>>> main
 export {};
