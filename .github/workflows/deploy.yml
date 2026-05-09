@@ -24,13 +24,19 @@ jobs:
           npm install
           npm run build
 
+      - name: 🔍 Check Secrets
+        run: |
+          if [ -z "${{ secrets.FTP_SERVER }}" ]; then echo "ERROR: FTP_SERVER secret is empty!"; exit 1; fi
+          if [ -z "${{ secrets.FTP_USERNAME }}" ]; then echo "ERROR: FTP_USERNAME secret is empty!"; exit 1; fi
+          if [ -z "${{ secrets.FTP_PASSWORD }}" ]; then echo "ERROR: FTP_PASSWORD secret is empty!"; exit 1; fi
+
       - name: 🚀 Sync files via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: / # Hapus titik di depan
+          server-dir: ./ # Hapus titik di depan
           protocol: ftp # Atau 'ftps' jika server Anda mendukung SSL
           port: 21 # Port standar FTP
           # Kita hanya mengirim file yang diperlukan untuk running
