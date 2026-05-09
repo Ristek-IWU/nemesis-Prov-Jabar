@@ -36,9 +36,8 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ./ # Hapus titik di depan
-          protocol: ftp # Atau 'ftps' jika server Anda mendukung SSL
-          port: 21 # Port standar FTP
+          server-dir: ./
+          state-name: .ftp-deploy-sync-state.json
           # Kita hanya mengirim file yang diperlukan untuk running
           exclude: |
             **/.git*
