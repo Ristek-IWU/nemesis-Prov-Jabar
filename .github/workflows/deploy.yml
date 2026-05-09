@@ -46,4 +46,7 @@ jobs:
             scripts/**
             scratch/**
             src/frontend/**
+            seed/**
+            data/*.sqlite
+            data/*.sql
             *.md
