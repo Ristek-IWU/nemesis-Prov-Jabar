@@ -162,6 +162,14 @@ export function buildPackagesWhereClause(scopeColumn, scopeKey, query, options =
     clauses.push('packages.is_priority = 1');
   }
 
+  if (query.umkmOnly) {
+    clauses.push('packages.budget < 500000000');
+  }
+
+  if (query.anomalyOnly) {
+    clauses.push("packages.severity != 'low'");
+  }
+
   return {
     sql: clauses.join(' AND '),
     params,
@@ -187,6 +195,14 @@ export function buildOwnerPackagesWhereClause(ownerType, ownerName, query) {
 
   if (query.priorityOnly) {
     clauses.push('packages.is_priority = 1');
+  }
+
+  if (query.umkmOnly) {
+    clauses.push('packages.budget < 500000000');
+  }
+
+  if (query.anomalyOnly) {
+    clauses.push("packages.severity != 'low'");
   }
 
   return {

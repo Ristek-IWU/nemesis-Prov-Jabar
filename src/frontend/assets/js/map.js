@@ -8,6 +8,10 @@ window['AuditMap'] = (() => {
   const HOVER_FILL = 'audit-fill-hover';
   const HOVER_LINE = 'audit-line-hover';
   const SELECTED_LINE = 'audit-line-selected';
+  
+  // New Special Layer for West Java Highlight
+  const JABAR_GLOW_LAYER = 'jabar-glow';
+  const JABAR_LINE_LAYER = 'jabar-line-bold';
 
   let map = null;
   let popup = null;
@@ -16,6 +20,7 @@ window['AuditMap'] = (() => {
   let _isProvinceView = false;
   let _onAreaClick = null;
   let _getPopupHtml = null;
+  let _geo = null;
 
   function getFeatureAreaKey(props) {
     return _isProvinceView ? props.provinceKey : props.regionKey;
@@ -82,10 +87,14 @@ window['AuditMap'] = (() => {
       container,
       // Default center to West Java
       center: [107.7098, -6.9175],
-      zoom: 8.5,
-      minZoom: 4,
-      maxZoom: 15,
-      style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+      zoom: 7.8,
+      minZoom: 6,
+      maxZoom: 14,
+      maxBounds: [[105.5, -8.5], [109.5, -5.0]], // West Java max bounds
+      pitch: 40, // Add some perspective
+      bearing: -10,
+      style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+      antialias: true
     });
   }
 
@@ -115,37 +124,70 @@ window['AuditMap'] = (() => {
       generateId: true,
     });
 
+    // Base Fill
     map.addLayer({
       id: FILL_LAYER,
       type: 'fill',
       source: SOURCE,
       paint: {
-        'fill-color': ['coalesce', ['get', 'fillColor'], '#243155'],
-        'fill-opacity': ['coalesce', ['get', 'fillOpacity'], 0.08],
+        'fill-color': ['coalesce', ['get', 'fillColor'], '#dcfce7'],
+        'fill-opacity': ['coalesce', ['get', 'fillOpacity'], 0.4],
       },
     });
 
+    // Base Borders
     map.addLayer({
       id: LINE_LAYER,
       type: 'line',
       source: SOURCE,
       paint: {
-        'line-color': ['coalesce', ['get', 'strokeColor'], '#b5a882'],
+        'line-color': ['coalesce', ['get', 'strokeColor'], '#22c55e'],
         'line-width': ['coalesce', ['get', 'strokeWidth'], 0.8],
-        'line-opacity': ['coalesce', ['get', 'strokeOpacity'], 0.17],
+        'line-opacity': ['coalesce', ['get', 'strokeOpacity'], 0.6],
       },
     });
 
+    // West Java Special Highlight (Glow)
+    map.addLayer({
+      id: JABAR_GLOW_LAYER,
+      type: 'fill',
+      source: SOURCE,
+      filter: ['any', 
+        ['==', ['get', 'provinceKey'], 'jawabarat'],
+        ['==', ['get', 'provinceName'], 'Jawa Barat']
+      ],
+      paint: {
+        'fill-color': '#16a34a',
+        'fill-opacity': 0.1,
+      },
+    });
+
+    map.addLayer({
+      id: JABAR_LINE_LAYER,
+      type: 'line',
+      source: SOURCE,
+      filter: ['any', 
+        ['==', ['get', 'provinceKey'], 'jawabarat'],
+        ['==', ['get', 'provinceName'], 'Jawa Barat']
+      ],
+      paint: {
+        'line-color': '#16a34a',
+        'line-width': 1.5,
+        'line-opacity': 0.8,
+      },
+    });
+
+    // Hover State
     map.addLayer({
       id: HOVER_FILL,
       type: 'fill',
       source: SOURCE,
       paint: {
-        'fill-color': ['coalesce', ['get', 'fillColor'], '#243155'],
+        'fill-color': '#15803d',
         'fill-opacity': [
           'case',
           ['boolean', ['feature-state', 'hover'], false],
-          ['min', ['+', ['coalesce', ['get', 'fillOpacity'], 0.08], 0.16], 0.85],
+          0.3,
           0,
         ],
       },
@@ -156,18 +198,19 @@ window['AuditMap'] = (() => {
       type: 'line',
       source: SOURCE,
       paint: {
-        'line-color': '#f0d8a8',
-        'line-width': 1.8,
+        'line-color': '#15803d',
+        'line-width': 2,
         'line-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 1, 0],
       },
     });
 
+    // Selected State
     map.addLayer({
       id: SELECTED_LINE,
       type: 'line',
       source: SOURCE,
       paint: {
-        'line-color': '#f0d8a8',
+        'line-color': '#ca8a04',
         'line-width': 3,
         'line-opacity': [
           'case',
@@ -178,6 +221,7 @@ window['AuditMap'] = (() => {
       },
     });
 
+    // Event Handlers
     map.on('mousemove', FILL_LAYER, (e) => {
       if (!e.features.length) return;
 
@@ -200,12 +244,22 @@ window['AuditMap'] = (() => {
             popup = new maplibregl.Popup({
               closeButton: false,
               closeOnClick: false,
-              maxWidth: '320px',
+              maxWidth: '280px',
               className: 'audit-popup',
               offset: 12,
+              anchor: 'bottom',
             });
           }
-          popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
+
+          // Anchor to the center of the feature's bounds instead of the cursor
+          const bounds = computeBounds(_geo, areaKey);
+          if (bounds) {
+            const center = [
+              (bounds[0][0] + bounds[1][0]) / 2,
+              (bounds[0][1] + bounds[1][1]) / 2
+            ];
+            popup.setLngLat(center).setHTML(html).addTo(map);
+          }
         }
       }
     });
@@ -236,6 +290,7 @@ window['AuditMap'] = (() => {
     _isProvinceView = options.isProvinceView;
     _onAreaClick = options.onAreaClick;
     _getPopupHtml = options.getPopupHtml;
+    _geo = geo;
 
     ensureMap(container);
 
@@ -253,8 +308,8 @@ window['AuditMap'] = (() => {
         const bounds = computeBounds(geo, options.focusAreaKey);
         if (bounds) {
           map.fitBounds(bounds, {
-            padding: options.isProvinceView ? 80 : 50,
-            duration: 1000,
+            padding: options.isProvinceView ? 100 : 60,
+            duration: 1500,
             essential: true
           });
         }
@@ -289,24 +344,24 @@ window['AuditMap'] = (() => {
       type: 'geojson',
       data: { type: 'FeatureCollection', features: [] },
     });
-    // Subtle glow fill
+    
     map.addLayer({
       id: FOCUS_FILL_LAYER,
       type: 'fill',
       source: FOCUS_SOURCE,
       paint: {
-        'fill-color': '#e8315a',
-        'fill-opacity': 0.12,
+        'fill-color': '#ca8a04',
+        'fill-opacity': 0.2,
       },
     });
-    // Bold animated-like border
+    
     map.addLayer({
       id: FOCUS_LINE_LAYER,
       type: 'line',
       source: FOCUS_SOURCE,
       paint: {
-        'line-color': '#e8315a',
-        'line-width': 2.8,
+        'line-color': '#ca8a04',
+        'line-width': 3,
         'line-opacity': 0.9,
         'line-dasharray': [2, 1],
       },
@@ -340,84 +395,74 @@ window['AuditMap'] = (() => {
     if (!map) return;
 
     const el = document.createElement('div');
+    el.className = 'focus-marker';
     el.style.cssText = [
-      'width:34px',
+      'width:40px',
       'height:40px',
       'cursor:pointer',
       'position:relative',
+      'display:flex',
+      'align-items:center',
+      'justify-content:center',
     ].join(';');
 
-    const pin = document.createElement('div');
-    pin.style.cssText = [
-      'width:26px',
-      'height:26px',
-      'border-radius:50% 50% 50% 0',
-      'background:#e8315a',
-      'border:3px solid #fff',
-      'box-shadow:0 2px 8px rgba(0,0,0,.55)',
-      'transform:rotate(-45deg)',
-      'transform-origin:center center',
-      'transition:transform .15s, box-shadow .15s',
+    const ring = document.createElement('div');
+    ring.style.cssText = [
+      'width:100%',
+      'height:100%',
+      'border-radius:50%',
+      'border:3px solid #16a34a',
+      'box-shadow:0 0 15px #16a34a',
+      'animation: marker-pulse 2s infinite',
       'position:absolute',
-      'top:0',
-      'left:4px',
     ].join(';');
 
-    el.appendChild(pin);
+    const dot = document.createElement('div');
+    dot.style.cssText = [
+      'width:12px',
+      'height:12px',
+      'background:#16a34a',
+      'border-radius:50%',
+      'box-shadow:0 0 10px #16a34a',
+    ].join(';');
 
-    el.addEventListener('mouseenter', () => {
-      pin.style.transform = 'rotate(-45deg) scale(1.2)';
-      pin.style.boxShadow = '0 4px 14px rgba(232,49,90,.6)';
-    });
-    el.addEventListener('mouseleave', () => {
-      pin.style.transform = 'rotate(-45deg) scale(1)';
-      pin.style.boxShadow = '0 2px 8px rgba(0,0,0,.55)';
-    });
+    el.appendChild(ring);
+    el.appendChild(dot);
 
-    _focusMarker = new maplibregl.Marker({ element: el, anchor: 'top' })
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @keyframes marker-pulse {
+        0% { transform: scale(0.5); opacity: 1; }
+        100% { transform: scale(1.5); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+
+    _focusMarker = new maplibregl.Marker({ element: el, anchor: 'center' })
       .setLngLat(lngLat)
       .addTo(map);
 
     _focusMarkerPopup = new maplibregl.Popup({
       closeButton: true,
       closeOnClick: false,
-      maxWidth: '220px',
+      maxWidth: '240px',
       className: 'audit-popup focus-popup',
-      offset: [0, -32],
+      offset: [0, -20],
     })
       .setLngLat(lngLat)
       .setHTML(
-        '<div style="font-weight:700;font-size:13px;color:#111;margin-bottom:3px">' + title + '</div>' +
-        '<div style="font-size:11px;color:#555;margin-bottom:6px">' + (subtitle || '') + '</div>' +
-        '<div style="font-size:10px;color:#e8315a;cursor:pointer;font-weight:600;padding:4px 0" id="focusZoomBtn">&#128269; Zoom ke wilayah ini</div>'
+        '<div style="font-weight:800;font-size:14px;color:#fff;margin-bottom:4px">' + title + '</div>' +
+        '<div style="font-size:11px;color:#94a3b8;margin-bottom:8px">' + (subtitle || '') + '</div>' +
+        '<div style="font-size:11px;color:#00f2ff;cursor:pointer;font-weight:700;padding:6px 0;text-transform:uppercase;letter-spacing:1px" id="focusZoomBtn">Zoom Ke Wilayah</div>'
       )
       .addTo(map);
 
     if (onClickZoom) {
       setTimeout(() => {
         const btn = document.getElementById('focusZoomBtn');
-        if (btn) {
-          btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            onClickZoom();
-          });
-        }
+        if (btn) btn.addEventListener('click', (e) => { e.stopPropagation(); onClickZoom(); });
       }, 50);
     }
-
-    _focusMarkerPopup.on('open', () => {
-      setTimeout(() => {
-        const btn = document.getElementById('focusZoomBtn');
-        if (btn && onClickZoom) {
-          const newBtn = btn.cloneNode(true);
-          btn.parentNode.replaceChild(newBtn, btn);
-          newBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            onClickZoom();
-          });
-        }
-      }, 50);
-    });
 
     el.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -430,13 +475,13 @@ window['AuditMap'] = (() => {
     const geo = { type: 'FeatureCollection', features };
     const bounds = computeBounds(geo);
     if (bounds) {
-      map.fitBounds(bounds, { padding: padding || 60, duration: 700 });
+      map.fitBounds(bounds, { padding: padding || 80, duration: 1500 });
     }
   }
 
   function flyToBandungFallback() {
     if (!map) return;
-    map.flyTo({ center: [107.5732, -7.0397], zoom: 11, duration: 700 });
+    map.flyTo({ center: [107.5732, -7.0397], zoom: 11, duration: 1500 });
   }
 
   return { render, refresh, closePopup: clearHover, addFocusMarker, setFocusZone, clearFocusZone, zoomToFeatures, flyToBandungFallback };

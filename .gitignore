@@ -1,5 +1,6 @@
 # Dependencies
-# node_modules/
+node_modules/
+
 
 # Environment Variables & Secrets
 .env
@@ -7,8 +8,8 @@
 !.env.example
 
 # Build output
-# dist/
-# dist-ssr/
+dist/
+dist-ssr/
 
 # Runtime Data (SQLite & JSON Datasets)
 data/dashboard.sqlite

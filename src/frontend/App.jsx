@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'preact/hooks';
 // import lagu from './assets/audio/lagu.mp3';
 const lagu = '/lagu.mp3';
 
+import { Moon, Sun, Volume2, VolumeX, Activity, Calendar, FileText } from 'lucide-preact';
+
 export function App() {
   /* =========================
      MUSIC SYSTEM
@@ -52,22 +54,10 @@ export function App() {
     }
   };
 
-  /* =========================
-     DARK MODE
-  ========================= */
-  const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem('theme') === 'dark';
-  });
-
   useEffect(() => {
-    if (darkMode) {
-      document.body.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.body.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [darkMode]);
+    document.body.classList.add('light-mode');
+    localStorage.setItem('theme', 'light');
+  }, []);
 
   /* =========================
      LOAD LEGACY JS
@@ -89,44 +79,38 @@ export function App() {
       {/* HEADER */}
       <div className="hdr">
         <div className="hdr-l">
-          <div className="logo">AUD</div>
+          <img className="logo" src="/nemesis-prov-jabar.svg" alt="NEMESIS Logo" />
           <div className="hdr-t">
-            <h1>Audit Pengadaan Provinsi Jawa Barat</h1>
+            <h1>NEMESIS &middot; Provinsi Jawa Barat</h1>
             <span>
-              Artifact hasil analyze &middot; LKPP / SiRUP &middot; Tahun Anggaran 2026
+              Digital Audit & Analytics &middot; TA 2026 &middot; West Java Province
             </span>
           </div>
         </div>
 
-        <div
-          className="hdr-r"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px'
-          }}
-        >
-          {/* DARK MODE BUTTON */}
-          <button
-            className="theme-toggle"
-            onClick={() => setDarkMode(!darkMode)}
-          >
-            {darkMode ? '☀️ Light' : '🌙 Dark'}
-          </button>
+        <div className="hdr-r">
+          {/* DARK MODE BUTTON (REMOVED) */}
 
           {/* MUSIC BUTTON */}
           <button
             className="theme-toggle"
             onClick={toggleMusic}
+            title={musicPlaying ? 'Mute Music' : 'Play Music'}
           >
-            {musicPlaying ? '🔊 Music' : '🎵 Music'}
+            {musicPlaying ? <Volume2 size={16} /> : <VolumeX size={16} />}
+            <span>Audio</span>
           </button>
 
           <div className="ll">
-            <span className="ldot"></span> LIVE
+            <Activity size={12} className="ldot-icon lpulse" />
+            LIVE ANALYTICS
           </div>
 
-          <div className="yr">TA 2026</div>
+
+          <div className="yr">
+            <Calendar size={12} style={{ marginRight: '6px' }} />
+            TA 2026
+          </div>
         </div>
       </div>
 
@@ -174,7 +158,10 @@ export function App() {
           <div className="modal-top" id="modalTop"></div>
           <div className="modal-body" id="modalBody"></div>
           <div className="modal-footer">
-            Map memakai agregasi penuh untuk paket multi-lokasi &middot; KPI nasional tidak menduplikasi paket multi-lokasi
+            <strong>Keterangan Parameter Data:</strong><br/>
+            &middot; <strong>Tingkatan:</strong> Provinsi (Pemerintah Provinsi Jabar) &amp; Kab/Kota (Pemerintah Kabupaten/Kota se-Jabar)<br/>
+            &middot; <strong>Potensi Pemborosan:</strong> Estimasi nilai pemborosan dari anomali paket pengadaan.<br/>
+            &middot; <strong>Paket Prioritas:</strong> Paket dengan tingkat risiko tinggi (Severity: High/Absurd) yang direkomendasikan untuk audit.
           </div>
         </div>
       </div>

@@ -159,11 +159,16 @@ function mapRegionRow(row) {
     },
     ownerMetrics: buildOwnerMetrics(row),
     severityCounts: {
-      med: row.med_severity_packages,
-      high: row.high_severity_packages,
-      absurd: row.absurd_severity_packages,
+      med: row.med_severity_packages || 0,
+      high: row.high_severity_packages || 0,
+      absurd: row.absurd_severity_packages || 0,
     },
     dominantOwnerType: dominantOwnerType(row),
+    // Added UMKM Potential mock logic (e.g. 15-25% of packages are UMKM eligible)
+    umkmPotential: {
+      totalPackages: Math.floor((row.total_packages || 0) * 0.18),
+      totalValue: (row.total_budget || 0) * 0.12,
+    }
   };
 }
 
@@ -190,11 +195,15 @@ function mapProvinceRow(row) {
     },
     ownerMetrics: buildProvinceOwnerMetrics(row),
     severityCounts: {
-      med: row.med_severity_packages,
-      high: row.high_severity_packages,
-      absurd: row.absurd_severity_packages,
+      med: row.med_severity_packages || 0,
+      high: row.high_severity_packages || 0,
+      absurd: row.absurd_severity_packages || 0,
     },
     dominantOwnerType: row.total_packages > 0 ? 'provinsi' : null,
+    umkmPotential: {
+      totalPackages: Math.floor((row.total_packages || 0) * 0.15),
+      totalValue: (row.total_budget || 0) * 0.1,
+    }
   };
 }
 
@@ -254,6 +263,8 @@ function normalizeScopedPackageQuery(requestQuery, options = {}) {
     ownerType: options.allowOwnerType === false ? '' : (requestQuery.ownerType || '').trim(),
     severity: options.allowSeverity === false ? '' : (requestQuery.severity || '').trim(),
     priorityOnly: parseBooleanQuery(requestQuery.priorityOnly),
+    umkmOnly: parseBooleanQuery(requestQuery.umkmOnly),
+    anomalyOnly: parseBooleanQuery(requestQuery.anomalyOnly),
   };
 }
 

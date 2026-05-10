@@ -12,6 +12,14 @@ export default defineConfig({
   build: {
     outDir: path.resolve(__dirname, 'dist'),
     emptyOutDir: true,
+    chunkSizeWarningLimit: 1200,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['preact', 'maplibre-gl', 'chart.js']
+        }
+      }
+    }
   },
   server: {
     port: process.env.PORT || 3000,

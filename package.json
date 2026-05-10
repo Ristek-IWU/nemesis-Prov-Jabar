@@ -10,6 +10,7 @@
     "db:reset": "node scripts/reset-db.js",
     "db:export": "node scripts/export-db.js",
     "db:import": "node scripts/import-db.js",
+    "db:filter": "node scripts/filter_database.js",
     "lint": "eslint src/",
     "format": "prettier --write \"src/**/*.{js,jsx,css}\""
   },
@@ -22,6 +23,7 @@
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.0.0",
     "hpp": "^0.2.3",
+    "lucide-preact": "^1.14.0",
     "maplibre-gl": "^5.0.0",
     "morgan": "^1.10.1",
     "preact": "^10.25.4",
