@@ -21,8 +21,9 @@ jobs:
 
       - name: 📦 Install dependencies & Build
         run: |
-          npm install
-          npm run build
+          npm ci
+          chmod +x node_modules/.bin/vite || true
+          node ./node_modules/vite/bin/vite.js build
 
       - name: 🔍 Check Secrets
         run: |
