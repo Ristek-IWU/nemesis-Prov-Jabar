@@ -6,148 +6,78 @@ import dotenv from 'dotenv';
 import morgan from 'morgan';
 import { createStream } from 'rotating-file-stream';
 import { createApp } from './src/backend/app.js';
-import { resolveRuntimeDbPath } from './src/backend/db.js';
-
-import Database from 'better-sqlite3';
-
-const db = new Database('data/kabupaten_sumedang.sqlite');
-
-// 1. Buat tabel owner_metrics kalau belum ada
-db.prepare(`
-  CREATE TABLE IF NOT EXISTS owner_metrics (
-    owner_type TEXT,
-    owner_name TEXT,
-    total_packages INTEGER DEFAULT 0,
-    total_priority_packages INTEGER DEFAULT 0,
-    total_flagged_packages INTEGER DEFAULT 0,
-    total_potential_waste REAL DEFAULT 0,
-    total_budget REAL DEFAULT 0,
-    med_severity_packages INTEGER DEFAULT 0,
-    high_severity_packages INTEGER DEFAULT 0,
-    absurd_severity_packages INTEGER DEFAULT 0
-  )
-`).run();
-console.log("✅ Tabel owner_metrics siap!");
-
-// 2. Tambahin kolom yang mungkin masih kurang di region_metrics (biar aman)
-const columns = [
-  'central_packages INTEGER DEFAULT 0', 'provincial_packages INTEGER DEFAULT 0',
-  'local_packages INTEGER DEFAULT 0', 'other_packages INTEGER DEFAULT 0',
-  'central_priority_packages INTEGER DEFAULT 0', 'provincial_priority_packages INTEGER DEFAULT 0',
-  'local_priority_packages INTEGER DEFAULT 0', 'other_priority_packages INTEGER DEFAULT 0',
-  'central_potential_waste REAL DEFAULT 0', 'provincial_potential_waste REAL DEFAULT 0',
-  'local_potential_waste REAL DEFAULT 0', 'other_potential_waste REAL DEFAULT 0',
-  'central_budget REAL DEFAULT 0', 'provincial_budget REAL DEFAULT 0',
-  'local_budget REAL DEFAULT 0', 'other_budget REAL DEFAULT 0'
-];
-
-columns.forEach(col => {
-  try {
-    db.prepare(`ALTER TABLE region_metrics ADD COLUMN ${col}`).run();
-  } catch (e) {
-    // skip kalau sudah ada
-  }
-});
-
-db.close();
+import { openDatabase, resolveRuntimeDbPath } from './src/backend/db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '.env') });
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
 
 async function startServer() {
-  const { db, app: apiApp } = await createApp();
-
+  const runtimeDbPath = await resolveRuntimeDbPath();
+  const db = await openDatabase({ dbPath: runtimeDbPath, readonly: true });
+  const { app: apiApp } = await createApp(db);
   const app = express();
 
-  // Ensure logs directory exists
-  const logDirectory = path.join(__dirname, 'logs');
-  if (!fs.existsSync(logDirectory)) {
+  // Setup logging (console + rotating file)
+  try {
+    const logDirectory = path.join(__dirname, 'logs');
     fs.mkdirSync(logDirectory, { recursive: true });
+    const accessLogStream = createStream('access.log', {
+      interval: '1d', // rotate daily
+      path: logDirectory,
+    });
+    app.use(morgan('combined', { stream: accessLogStream }));
+  } catch (e) {
+    // ignore
   }
 
-  // Filename generator for daily rotation: prefix-dd-mm-yyyy.log
-  const createLogFilename = (prefix) => (time, index) => {
-    const t = time || new Date();
-    const d = String(t.getDate()).padStart(2, '0');
-    const m = String(t.getMonth() + 1).padStart(2, '0');
-    const y = t.getFullYear();
-    const idx = index > 1 ? `-${index}` : '';
-    return `${prefix}-${d}-${m}-${y}${idx}.log`;
-  };
-
-  // Create daily rotating write streams with GZIP compression
-  const accessLogStream = createStream(createLogFilename('access'), {
-    interval: '1d', // rotate daily
-    size: '100M', // also rotate if file exceeds 100MB
-    path: logDirectory,
-    compress: 'gzip', // natively gzip archives (~90% compression)
-    maxFiles: 14 // standard 2 weeks retention for access logs
-  });
-
-  const errorLogStream = createStream(createLogFilename('error'), {
-    interval: '1d',
-    size: '20M',
-    path: logDirectory,
-    compress: 'gzip',
-    maxFiles: 30 // keep silent errors longer for debugging
-  });
-
-  // Use 'short' format to drastically save horizontal log size without losing crucial endpoint info
-  app.use(morgan('short', { stream: accessLogStream }));
-
-  // Log only errors (status >= 400) to error stream
-  app.use(morgan('short', {
-    stream: errorLogStream,
-    skip: (req, res) => res.statusCode < 400
-  }));
-
-  // Cleaner, colorized format for the immediate console
+  // Always log to console for real-time visibility
   app.use(morgan('dev'));
 
-  // Mount the secure API under root (the routers inside already prefix /api)
+  // Mount API app (routes under /api)
   app.use('/', apiApp);
 
-  if (!isProduction) {
-    // Development mode: use Vite's middleware
-    const { createServer } = await import('vite');
-    const vite = await createServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
+  // Serve static frontend (built with Vite -> dist)
+  const distDir = path.join(__dirname, 'dist');
+  if (fs.existsSync(distDir)) {
+    app.use(express.static(distDir, { index: false }));
 
-    app.use(vite.middlewares);
-    console.log('[Worker] Vite development server attached.');
-  } else {
-    // Production mode: serve static files natively via Express
-    const distPath = path.join(__dirname, 'dist');
-    if (!fs.existsSync(distPath)) {
-      console.warn('[Worker] WARNING: dist directory not found! Run `npm run build` for production.');
-    } else {
-      app.use(express.static(distPath));
-      app.get(/(.*)/, (req, res) => {
-        res.sendFile(path.join(distPath, 'index.html'));
-      });
-      console.log('[Worker] Static production files served from /dist');
-    }
+    // SPA fallback: return index.html for non-API GET requests
+    app.use((req, res, next) => {
+      if (req.path.startsWith('/api')) return next();
+      if (req.method !== 'GET') return next();
+      res.sendFile(path.join(distDir, 'index.html'));
+    });
   }
 
   const server = app.listen(PORT, () => {
-    console.log(`[Worker] Orchestrator listening on http://127.0.0.1:${PORT}`);
+    console.log(`\n🚀 Server is ready!`);
+    console.log(`🔗 Local: http://localhost:${PORT}`);
+    console.log(`[Worker] Orchestrator listening on port ${PORT}`);
     console.log(`[Worker] Environment: ${isProduction ? 'Production' : 'Development'}`);
-    console.log(`[Worker] SQLite Runtime Path: ${resolveRuntimeDbPath()}`);
+    console.log(`[Worker] SQLite database: ${runtimeDbPath}`);
+    console.log('[Worker] Waiting for requests...\n');
   });
 
+  // Track server activity
+  server.on('error', (err) => {
+    console.error('[Server] Error:', err);
+  });
+
+  server.on('clientError', (err, socket) => {
+    console.error('[Server] Client error:', err);
+  });
+
+  // Graceful shutdown
   function shutdown(signal) {
     console.log(`\n[Worker] ${signal} received, shutting down...`);
     server.close(() => {
-      db.close();
-      console.log('[Worker] DB closed. Exiting.');
+      try { db.close(); } catch {}
+      console.log('[Worker] Server closed. Exiting.');
       process.exit(0);
     });
-
     setTimeout(() => {
       console.error('[Worker] Force closing...');
       process.exit(1);
@@ -156,9 +86,16 @@ async function startServer() {
 
   process.on('SIGINT', () => shutdown('SIGINT'));
   process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('[Worker] Unhandled Rejection at:', promise, 'reason:', reason);
+  });
+  process.on('uncaughtException', (err) => {
+    console.error('[Worker] Uncaught Exception:', err);
+    process.exit(1);
+  });
 }
 
 startServer().catch(err => {
-  console.error('[Worker] Fatal error starting server:', err);
+  console.error('[Worker] Fatal error:', err);
   process.exit(1);
 });

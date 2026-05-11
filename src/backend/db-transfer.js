@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import readline from 'readline';
-import Database from 'better-sqlite3';
+import { openDatabase, loadSqlJs } from './db.js';
 
 const SQLITE_FILE_EXTENSIONS = new Set(['.sqlite', '.sqlite3', '.db']);
 const SQL_DUMP_EXTENSIONS = new Set(['.sql']);
@@ -168,10 +168,10 @@ function listSchemaObjects(db) {
 }
 
 async function exportTableData(db, tableName, outputStream) {
-  const selectStatement = db.prepare(`SELECT * FROM ${escapeIdentifier(tableName)}`).raw();
+  const rows = db.prepare(`SELECT * FROM ${escapeIdentifier(tableName)}`).all();
 
-  for (const row of selectStatement.iterate()) {
-    const values = row.map((value) => toSqlLiteral(value)).join(', ');
+  for (const row of rows) {
+    const values = Object.values(row).map((value) => toSqlLiteral(value)).join(', ');
     await writeLine(outputStream, `INSERT INTO ${escapeIdentifier(tableName)} VALUES(${values});`);
   }
 }
@@ -181,7 +181,7 @@ async function exportSqliteSequence(db, outputStream) {
     return;
   }
 
-  const rows = db.prepare(`SELECT name, seq FROM "sqlite_sequence" ORDER BY name`).raw().all();
+  const rows = db.prepare(`SELECT name, seq FROM "sqlite_sequence" ORDER BY name`).all();
 
   if (!rows.length) {
     return;
@@ -190,14 +190,13 @@ async function exportSqliteSequence(db, outputStream) {
   await writeLine(outputStream, `DELETE FROM "sqlite_sequence";`);
 
   for (const row of rows) {
-    const values = row.map((value) => toSqlLiteral(value)).join(', ');
+    const values = Object.values(row).map((value) => toSqlLiteral(value)).join(', ');
     await writeLine(outputStream, `INSERT INTO "sqlite_sequence" VALUES(${values});`);
   }
 }
 
 async function exportDatabaseAsSql(sourcePath, outputPath) {
-  const db = new Database(sourcePath, { readonly: true, fileMustExist: true });
-  db.defaultSafeIntegers(true);
+  const db = await openDatabase({ dbPath: sourcePath, readonly: true });
 
   const schemaObjects = listSchemaObjects(db);
   const tables = schemaObjects.filter((entry) => entry.type === 'table');
@@ -227,14 +226,16 @@ async function exportDatabaseAsSql(sourcePath, outputPath) {
     fs.rmSync(outputPath, { force: true });
     throw error;
   } finally {
-    db.close();
+    try { db.close(); } catch {}
   }
 }
 
 async function importSqlDump(sourcePath, targetPath) {
   const targetDirectory = path.dirname(targetPath);
   const tempDbPath = path.join(targetDirectory, `.import-${Date.now()}-${process.pid}.sqlite`);
-  const db = new Database(tempDbPath);
+
+  const SQL = await loadSqlJs();
+  const db = new SQL.Database();
 
   let lineNumber = 0;
   let statements = [];
@@ -246,7 +247,12 @@ async function importSqlDump(sourcePath, targetPath) {
       return;
     }
 
-    db.exec(statements.join('\n'));
+    try {
+      db.run(statements.join('\n'));
+    } catch (err) {
+      throw err;
+    }
+
     statements = [];
     bufferedBytes = 0;
   }
@@ -284,20 +290,14 @@ async function importSqlDump(sourcePath, targetPath) {
   } catch (error) {
     throw new Error(`Failed to import SQL dump near line ${lineNumber}: ${error.message}`);
   } finally {
-    db.close();
-
-    if (!sqlApplied) {
+    // write out DB file from memory
+    if (sqlApplied) {
+      const data = db.export();
+      fs.writeFileSync(tempDbPath, Buffer.from(data));
+      // copy to target
+      fs.copyFileSync(tempDbPath, targetPath);
       removeSqliteArtifacts(tempDbPath);
     }
-  }
-
-  const importedDb = new Database(tempDbPath, { readonly: true, fileMustExist: true });
-
-  try {
-    await importedDb.backup(targetPath);
-  } finally {
-    importedDb.close();
-    removeSqliteArtifacts(tempDbPath);
   }
 }
 

@@ -21,10 +21,9 @@ function resolveCorsOrigin() {
     .filter(Boolean);
 }
 
-export async function createApp() {
-  const { openDatabase } = await import('./db.js');
-  const db = openDatabase();
+export async function createApp(dbOverride) {
   const app = express();
+  const db = dbOverride || await (await import('./db.js')).openDatabase();
 
   // Security Middlewares
   app.use(helmet({
@@ -66,38 +65,70 @@ export async function createApp() {
   });
 
   app.get('/api/bootstrap', (_req, res) => {
-    res.json(getBootstrapPayload(db));
+    try {
+      let payload;
+      try {
+        payload = getBootstrapPayload(db);
+      } catch (dbErr) {
+        console.warn('Bootstrap DB query error (may be empty DB):', dbErr.message);
+        // Return minimal safe response
+        payload = {
+          regions: [],
+          packages: { data: [] },
+          metrics: { totalWaste: 0, totalBudget: 0 },
+        };
+      }
+      res.json(payload);
+    } catch (err) {
+      console.error('Error in /api/bootstrap:', err);
+      res.status(500).json({ error: 'Bootstrap failed' });
+    }
   });
 
   app.get('/api/regions/:regionKey/packages', (req, res) => {
-    const payload = getRegionPackages(db, req.params.regionKey, req.query);
-    if (!payload) {
-      return res.status(404).json({ error: 'Region not found' });
+    try {
+      const payload = getRegionPackages(db, req.params.regionKey, req.query);
+      if (!payload) {
+        return res.status(404).json({ error: 'Region not found' });
+      }
+      res.json(payload);
+    } catch (err) {
+      console.error('Error in /api/regions:', err);
+      res.status(500).json({ error: 'Region query failed' });
     }
-    res.json(payload);
   });
 
   app.get('/api/provinces/:provinceKey/packages', (req, res) => {
-    const payload = getProvincePackages(db, req.params.provinceKey, req.query);
-    if (!payload) {
-      return res.status(404).json({ error: 'Province not found' });
+    try {
+      const payload = getProvincePackages(db, req.params.provinceKey, req.query);
+      if (!payload) {
+        return res.status(404).json({ error: 'Province not found' });
+      }
+      res.json(payload);
+    } catch (err) {
+      console.error('Error in /api/provinces:', err);
+      res.status(500).json({ error: 'Province query failed' });
     }
-    res.json(payload);
   });
 
   app.get('/api/owners/packages', (req, res) => {
-    const ownerType = String(req.query.ownerType || '').trim();
-    const ownerName = String(req.query.ownerName || '').trim();
+    try {
+      const ownerType = String(req.query.ownerType || '').trim();
+      const ownerName = String(req.query.ownerName || '').trim();
 
-    if (!ownerType || !ownerName) {
-      return res.status(400).json({ error: 'ownerType and ownerName are required' });
-    }
+      if (!ownerType || !ownerName) {
+        return res.status(400).json({ error: 'ownerType and ownerName are required' });
+      }
 
-    const payload = getOwnerPackages(db, req.query);
-    if (!payload) {
-      return res.status(404).json({ error: 'Owner not found' });
+      const payload = getOwnerPackages(db, req.query);
+      if (!payload) {
+        return res.status(404).json({ error: 'Owner not found' });
+      }
+      res.json(payload);
+    } catch (err) {
+      console.error('Error in /api/owners/packages:', err);
+      res.status(500).json({ error: 'Owner query failed' });
     }
-    res.json(payload);
   });
 
   // Error boundary

@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
-import Database from "better-sqlite3";
-import {  DB_PATH  } from "../src/backend/config.js";
-import {  getTransferFileFormat, importSqlDump, isImportableDatabaseFile  } from "../src/backend/db-transfer.js";
+import { DB_PATH } from "../src/backend/config.js";
+import { getTransferFileFormat, importSqlDump, isImportableDatabaseFile } from "../src/backend/db-transfer.js";
+import { openDatabase } from "../src/backend/db.js";
 
 function findLatestExportInDefaultFolder() {
   const exportDir = path.join(path.dirname(DB_PATH), "exports");
@@ -55,8 +55,8 @@ function resolveImportPath(args) {
   throw new Error("No import file provided and no exports found in data/exports.");
 }
 
-function assertSchema(dbPath) {
-  const db = new Database(dbPath, { readonly: true });
+async function assertSchema(dbPath) {
+  const db = await openDatabase({ dbPath, readonly: true });
 
   try {
     const hasPackages = db
@@ -64,10 +64,10 @@ function assertSchema(dbPath) {
       .get();
 
     if (!hasPackages) {
-      throw new Error(`Imported DB at ${dbPath} does not contain expected table \"packages\".`);
+      throw new Error(`Imported DB at ${dbPath} does not contain expected table "packages".`);
     }
   } finally {
-    db.close();
+    try { db.close(); } catch {}
   }
 }
 
@@ -95,16 +95,12 @@ async function main() {
   if (sourceFormat === "sql") {
     await importSqlDump(sourcePath, targetPath);
   } else {
-    const sourceDb = new Database(sourcePath, { readonly: true });
-
-    try {
-      await sourceDb.backup(targetPath);
-    } finally {
-      sourceDb.close();
-    }
+    // For sqlite file, copy directly to runtime path. sql.js operates in-memory; copying
+    // physical file is the simplest strategy for runtime usage.
+    fs.copyFileSync(sourcePath, targetPath);
   }
 
-  assertSchema(targetPath);
+  await assertSchema(targetPath);
 
   console.log("Database import completed.");
   console.log(`Import source: ${sourcePath}`);

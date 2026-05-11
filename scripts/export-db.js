@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import Database from "better-sqlite3";
+// use file copy for sqlite exports (avoid native modules)
 import {  DATA_DIR  } from "../src/backend/config.js";
 import {  exportDatabaseAsSql, getTransferFileFormat  } from "../src/backend/db-transfer.js";
 import {  resolveRuntimeDbPath  } from "../src/backend/db.js";
@@ -96,13 +96,14 @@ async function main() {
   if (outputFormat === "sql") {
     await exportDatabaseAsSql(sourcePath, outputPath);
   } else {
-    const sourceDb = new Database(sourcePath, { readonly: true });
-
-    try {
-      await sourceDb.backup(outputPath);
-    } finally {
-      sourceDb.close();
-    }
+    // For sqlite output, just copy the runtime DB file and its journal files.
+    fs.copyFileSync(sourcePath, outputPath);
+    ['-shm','-wal'].forEach((sfx) => {
+      const alt = `${sourcePath}${sfx}`;
+      if (fs.existsSync(alt)) {
+        try { fs.copyFileSync(alt, `${outputPath}${sfx}`); } catch {}
+      }
+    });
   }
 
   console.log(`Database export completed.`);
