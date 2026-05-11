@@ -42,12 +42,24 @@ async function startServer() {
   // Serve static frontend (built with Vite -> dist)
   const distDir = path.join(__dirname, 'dist');
   if (fs.existsSync(distDir)) {
+    const assetsDir = path.join(distDir, 'assets');
+
+    if (fs.existsSync(assetsDir)) {
+      app.use('/assets', express.static(assetsDir, { index: false, fallthrough: false }));
+    }
+
     app.use(express.static(distDir, { index: false }));
 
     // SPA fallback: return index.html for non-API GET requests
     app.use((req, res, next) => {
       if (req.path.startsWith('/api')) return next();
       if (req.method !== 'GET') return next();
+
+      // Do not fallback for explicit file requests (.js/.css/.png/etc)
+      if (path.extname(req.path)) {
+        return res.status(404).type('text/plain').send('Not found');
+      }
+
       res.sendFile(path.join(distDir, 'index.html'));
     });
   }

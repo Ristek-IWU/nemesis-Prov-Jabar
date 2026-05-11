@@ -17,6 +17,8 @@ data/dashboard.sql
 dataset/
 backend/data/
 backend/dataset/
+data/dashboard.zip
+data/dashboard.sqlite
 
 # Logs
 logs/
