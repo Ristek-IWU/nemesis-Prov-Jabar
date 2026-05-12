@@ -270,6 +270,7 @@ body {
   min-height: 620px;
   padding: 24px 32px 32px 32px;
   gap: 24px;
+  align-items: stretch;
 }
 
 /* MAP CONTAINER */
@@ -517,6 +518,7 @@ body {
   overflow: hidden;
   box-shadow: var(--shadow-premium);
   min-height: 520px;
+  height: 60vh;
 }
 
 .sbh {
@@ -1235,8 +1237,9 @@ body {
   .sb {
     order: 1;
     border-radius: 20px;
-    overflow: visible;
+    overflow: hidden;
     min-height: 420px;
+    height: 60vh;
   }
 
   .mc {
@@ -1254,7 +1257,7 @@ body {
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 12px;
     padding: 16px;
-    overflow: visible;
+    overflow-y: auto;
   }
 
   .sidebar-pager {

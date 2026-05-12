@@ -163,26 +163,26 @@ export function App() {
                 <div className="data-note-body">
                   <div><strong>Asal:</strong> Sistem NEMESIS &middot; Pemerintah Provinsi Jawa Barat</div>
                   <div><strong>Tanggal diambil:</strong> 12 Mei 2026</div>
-                  <div><strong>Ringkas:</strong> Data pengadaan, lokasi, pemilik paket, serta indikator anomali yang telah diproses.</div>
+                  <div><strong>Ringkas:</strong> Ringkasan data pengadaan: lokasi, pemilik, dan tanda risiko.</div>
                 </div>
               </div>
               <div className="data-note-block">
                 <div className="data-note-subtitle">Parameter Tingkat Anomali</div>
                 <div className="data-note-body">
-                  <div><strong>Absurd:</strong> Risiko sangat tinggi, indikasi anomali sangat kuat.</div>
-                  <div><strong>High:</strong> Risiko tinggi, indikasi anomali kuat.</div>
-                  <div><strong>Medium:</strong> Risiko sedang, indikasi anomali moderat.</div>
-                  <div><strong>Low:</strong> Risiko rendah, indikasi anomali lemah.</div>
-                  <div><strong>Normal:</strong> Tidak ada indikasi anomali signifikan.</div>
+                  <div><strong>Absurd:</strong> Sangat berisiko, perlu dicek segera.</div>
+                  <div><strong>High:</strong> Berisiko tinggi, perlu perhatian.</div>
+                  <div><strong>Medium:</strong> Berisiko sedang, perlu dicek.</div>
+                  <div><strong>Low:</strong> Berisiko rendah.</div>
+                  <div><strong>Normal:</strong> Aman, tidak ada masalah berarti.</div>
                 </div>
               </div>
               <div className="data-note-block">
                 <div className="data-note-subtitle">Klaster Kategorisasi</div>
                 <div className="data-note-body">
-                  <div><strong>Absurd:</strong> Pola ekstrem, outlier kuat pada parameter utama.</div>
-                  <div><strong>High:</strong> Pola berisiko tinggi, deviasi jelas dari mayoritas.</div>
-                  <div><strong>Medium:</strong> Pola moderat, deviasi ada namun tidak ekstrem.</div>
-                  <div><strong>Low:</strong> Pola ringan, deviasi minimal.</div>
+                  <div><strong>Absurd:</strong> Pola sangat berbeda dari kebanyakan.</div>
+                  <div><strong>High:</strong> Pola cukup berbeda.</div>
+                  <div><strong>Medium:</strong> Pola agak berbeda.</div>
+                  <div><strong>Low:</strong> Pola normal, beda tipis.</div>
                 </div>
               </div>
             </div>
