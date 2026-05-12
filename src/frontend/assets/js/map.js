@@ -21,6 +21,7 @@ window['AuditMap'] = (() => {
   let _onAreaClick = null;
   let _getPopupHtml = null;
   let _geo = null;
+  let _resizeHandler = null;
 
   function getFeatureAreaKey(props) {
     return _isProvinceView ? props.provinceKey : props.regionKey;
@@ -95,6 +96,21 @@ window['AuditMap'] = (() => {
       bearing: -10,
       style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
       antialias: true
+    });
+
+    _resizeHandler = () => {
+      if (map) {
+        map.resize();
+      }
+    };
+
+    window.addEventListener('resize', _resizeHandler);
+    window.addEventListener('orientationchange', _resizeHandler);
+
+    map.on('load', () => {
+      if (map) {
+        map.resize();
+      }
     });
   }
 

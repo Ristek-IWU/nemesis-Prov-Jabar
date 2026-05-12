@@ -10,6 +10,7 @@ node_modules/
 # Build output
 dist/
 dist-ssr/
+dist.zip
 
 # Runtime Data (SQLite & JSON Datasets)
 data/database.sqlite

@@ -18,6 +18,7 @@
     search: '',
     sortBy: 'waste',
     isLegendHidden: false,
+    sidebarPage: 1,
     modalRequestId: 0,
     modal: {
       areaType: 'region',
@@ -349,6 +350,30 @@
           )}</div><div class="ks">${escapeHtml(item.sublabel)}</div></div>`
       )
       .join('');
+  }
+
+  function isMobileSidebarPaginationEnabled() {
+    return window.innerWidth <= 900;
+  }
+
+  function getSidebarPageSize() {
+    return isMobileSidebarPaginationEnabled() ? 6 : Number.MAX_SAFE_INTEGER;
+  }
+
+  function renderSidebarPagination(pagination) {
+    if (!pagination || pagination.totalPages <= 1) {
+      return '';
+    }
+
+    return `<div class="pager sidebar-pager"><button class="pager-btn" ${pagination.page <= 1 ? 'disabled' : ''} onclick="${actionCall(
+      'changeSidebarPage',
+      pagination.page - 1
+    )}">Sebelumnya</button><div class="pager-text">Halaman ${escapeHtml(formatNumber(pagination.page))} / ${escapeHtml(
+      formatNumber(pagination.totalPages)
+    )} &middot; ${escapeHtml(formatNumber(pagination.totalItems))} kartu</div><button class="pager-btn" ${pagination.page >= pagination.totalPages ? 'disabled' : ''} onclick="${actionCall(
+      'changeSidebarPage',
+      pagination.page + 1
+    )}">Berikutnya</button></div>`;
   }
 
   function renderSidebarMessage(message, isError) {
@@ -723,15 +748,24 @@
     }
 
     let listHtml = '';
+    let paginationHtml = '';
+    const pageSize = getSidebarPageSize();
 
     if (isCentralOwnerMode()) {
       const owners = getFilteredOwnersForSidebar();
+      const totalPages = Math.max(1, Math.ceil(owners.length / pageSize));
+      const page = Math.min(state.sidebarPage, totalPages);
+      const pageItems = isMobileSidebarPaginationEnabled()
+        ? owners.slice((page - 1) * pageSize, page * pageSize)
+        : owners;
 
-      if (!owners.length) {
+      state.sidebarPage = page;
+
+      if (!pageItems.length) {
         listHtml = `<div class="panel-msg">Tidak ada kementerian/lembaga yang cocok dengan filter saat ini.</div>`;
       } else {
         const maxWaste = Math.max(...owners.map((owner) => owner.totalPotentialWaste), 1);
-        listHtml = owners
+        listHtml = pageItems
           .map((owner, index) => {
             const selectedClass =
               state.selectedOwnerKey === getOwnerCardKey(owner.ownerType, owner.ownerName)
@@ -764,16 +798,31 @@
             );
           })
           .join('');
+
+        paginationHtml = isMobileSidebarPaginationEnabled()
+          ? renderSidebarPagination({
+              page,
+              totalPages,
+              totalItems: owners.length,
+            })
+          : '';
       }
     } else {
       const areas = getFilteredAreasForSidebar();
+      const totalPages = Math.max(1, Math.ceil(areas.length / pageSize));
+      const page = Math.min(state.sidebarPage, totalPages);
+      const pageItems = isMobileSidebarPaginationEnabled()
+        ? areas.slice((page - 1) * pageSize, page * pageSize)
+        : areas;
 
-      if (!areas.length) {
+      state.sidebarPage = page;
+
+      if (!pageItems.length) {
         listHtml = `<div class="panel-msg">Tidak ada ${escapeHtml(
           isProvinceView() ? 'provinsi' : 'region'
         )} yang cocok dengan filter saat ini.</div>`;
       } else {
-        const areaEntries = areas.map((area) => ({
+        const areaEntries = pageItems.map((area) => ({
           area,
           metrics: getSidebarAreaMetrics(area),
         }));
@@ -809,10 +858,18 @@
             );
           })
           .join('');
+
+        paginationHtml = isMobileSidebarPaginationEnabled()
+          ? renderSidebarPagination({
+              page,
+              totalPages,
+              totalItems: areas.length,
+            })
+          : '';
       }
     }
 
-    dom.sidebarContent.insertAdjacentHTML('beforeend', listHtml);
+    dom.sidebarContent.insertAdjacentHTML('beforeend', listHtml + paginationHtml);
   }
   // khusus jabar
   function featureStyle(feature) {
@@ -1595,11 +1652,13 @@ maintainAspectRatio: false,
 
   function setSearch(value) {
     state.search = value;
+    state.sidebarPage = 1;
     renderSidebarContent(false);
   }
 
   function setSort(value) {
     state.sortBy = value;
+    state.sidebarPage = 1;
     renderSidebarContent(true);
   }
 
@@ -1611,6 +1670,7 @@ maintainAspectRatio: false,
     }
 
     state.tab = value;
+    state.sidebarPage = 1;
     refreshMapStyles();
     renderTabs();
     renderSidebarContent();
@@ -1625,6 +1685,7 @@ maintainAspectRatio: false,
 
     if (viewChanged) {
       state.tab = 'all';
+      state.sidebarPage = 1;
       state.selectedAreaKey = null;
       state.selectedOwnerKey = null;
       closeRegionModal();
@@ -1638,6 +1699,7 @@ maintainAspectRatio: false,
 
     if (centralOwnerModeChanged) {
       state.tab = 'all';
+      state.sidebarPage = 1;
       state.selectedAreaKey = null;
       state.selectedOwnerKey = null;
 
@@ -1711,6 +1773,11 @@ maintainAspectRatio: false,
   function changeModalPage(page) {
     state.modal.page = page;
     loadAreaPackages();
+  }
+
+  function changeSidebarPage(page) {
+    state.sidebarPage = page;
+    renderSidebarContent(false);
   }
 
   function openPackageDetail(sourceId) {
@@ -1798,6 +1865,7 @@ maintainAspectRatio: false,
 
   window['dashboardActions'] = {
     changeModalPage,
+    changeSidebarPage,
     closeRegionModal,
     handlePackageRowKeydown,
     openAreaModal,
