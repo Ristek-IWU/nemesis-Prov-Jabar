@@ -352,6 +352,10 @@
       .join('');
   }
 
+  function getModalPageSize() {
+    return window.innerWidth <= 900 ? 10 : 25;
+  }
+
   function isMobileSidebarPaginationEnabled() {
     return window.innerWidth <= 900;
   }
@@ -1355,9 +1359,10 @@ maintainAspectRatio: false,
       )} paket pada area ini</div>` +
       `<table class="rtbl"><thead><tr><th>ID</th><th>Nama Paket</th><th>Pemilik</th><th>Satker / Lokasi</th><th>Pagu</th><th>Severity</th><th>Alasan</th></tr></thead><tbody>${rowsHtml}</tbody></table>` +
       renderPagination(payload.pagination);
-      setTimeout(() => {
-  renderRegionCharts(region);
-}, 50);
+    const chartDelay = window.innerWidth <= 900 ? 250 : 50;
+    setTimeout(() => {
+      renderRegionCharts(region);
+    }, chartDelay);
   }
 
   function renderProvinceModalContent(payload) {
@@ -1590,7 +1595,7 @@ maintainAspectRatio: false,
       areaKey,
       ownerName: '',
       page: 1,
-      pageSize: 25,
+      pageSize: getModalPageSize(),
       search: '',
       ownerType: '',
       severity: '',
@@ -1615,7 +1620,7 @@ maintainAspectRatio: false,
       areaKey: null,
       ownerName,
       page: 1,
-      pageSize: 25,
+      pageSize: getModalPageSize(),
       search: '',
       ownerType,
       severity: '',
