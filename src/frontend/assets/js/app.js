@@ -1076,16 +1076,16 @@
               )}"`
               : ''
             }>` +
-            `<td class="mono">${escapeHtml(String(item.sourceId || item.id))}</td>` +
-            `<td class="pkg">${escapeHtml(item.packageName)}</td>` +
-            `<td><div class="tbl-owner">${escapeHtml(item.ownerName)}</div><div class="tbl-sub">${escapeHtml(
+            `<td class="mono" data-label="ID">${escapeHtml(String(item.sourceId || item.id))}</td>` +
+            `<td class="pkg" data-label="Nama Paket">${escapeHtml(item.packageName)}</td>` +
+            `<td data-label="Pemilik"><div class="tbl-owner">${escapeHtml(item.ownerName)}</div><div class="tbl-sub">${escapeHtml(
               ownerTypeLabel(item.ownerType)
             )}</div></td>` +
-            `<td><div class="tbl-owner">${escapeHtml(item.satker || '-')}</div><div class="tbl-sub">${escapeHtml(
+            `<td data-label="Satker / Lokasi"><div class="tbl-owner">${escapeHtml(item.satker || '-')}</div><div class="tbl-sub">${escapeHtml(
               item.locationRaw || '-'
             )}</div></td>` +
-            `<td class="mono pkg" style="color:var(--sage)">${item.budget === null ? '-' : formatCurrencyLong(item.budget)}</td>` +
-            `<td><span class="sev-b" style="background:${escapeAttr(
+            `<td class="mono pkg" data-label="Pagu" style="color:var(--sage)">${item.budget === null ? '-' : formatCurrencyLong(item.budget)}</td>` +
+            `<td data-label="Severity"><span class="sev-b" style="background:${escapeAttr(
               item.audit.severity === 'absurd'
                 ? 'rgba(212,169,153,.18)'
                 : item.audit.severity === 'high'
@@ -1096,7 +1096,7 @@
             )};color:${escapeAttr(severityColor(item.audit.severity))}">${escapeHtml(
               severityLabel(item.audit.severity)
             )}</span></td>` +
-            `<td class="reason">${escapeHtml(item.audit.reason || '-')}</td>` +
+            `<td class="reason" data-label="Alasan">${escapeHtml(item.audit.reason || '-')}</td>` +
             `</tr>`
           );
         })
@@ -1127,8 +1127,12 @@
     return value || fallback;
   };
 
-  const chartText = cssVar('--text-main', '#0f172a');
-  const chartTextMuted = cssVar('--text-dim', '#64748b');
+  // Use white text for better contrast on dark backgrounds
+  const chartText = '#ffffff';
+  const chartTextMuted = '#e0e0e0';
+  
+  // Legend text should be dark for visibility on light backgrounds
+  const legendText = '#1a1a1a';
 
   const severityCanvas =
     document.getElementById('severityPieChart');
@@ -1174,18 +1178,25 @@
 maintainAspectRatio: false,
         plugins: {
           legend: {
+            position: 'bottom',
             labels: {
-              color: chartText,
-              font: { size: 11, weight: '600' },
-              boxWidth: 10,
-              boxHeight: 10,
-              padding: 12,
+              color: legendText,
+              font: { size: 10, weight: '600' },
+              boxWidth: 8,
+              boxHeight: 8,
+              padding: 8,
+              usePointStyle: true,
             }
           },
           tooltip: {
             titleColor: chartText,
             bodyColor: chartText,
             footerColor: chartTextMuted,
+            backgroundColor: 'rgba(0,0,0,0.8)',
+            titleFont: { size: 10 },
+            bodyFont: { size: 10 },
+            padding: 6,
+            displayColors: true,
           },
         }
       }
@@ -1239,18 +1250,25 @@ maintainAspectRatio: false,
 maintainAspectRatio: false,
         plugins: {
           legend: {
+            position: 'bottom',
             labels: {
-              color: chartText,
-              font: { size: 11, weight: '600' },
-              boxWidth: 10,
-              boxHeight: 10,
-              padding: 12,
+              color: legendText,
+              font: { size: 10, weight: '600' },
+              boxWidth: 8,
+              boxHeight: 8,
+              padding: 8,
+              usePointStyle: true,
             }
           },
           tooltip: {
             titleColor: chartText,
             bodyColor: chartText,
             footerColor: chartTextMuted,
+            backgroundColor: 'rgba(0,0,0,0.8)',
+            titleFont: { size: 10 },
+            bodyFont: { size: 10 },
+            padding: 6,
+            displayColors: true,
           },
         }
       }
@@ -1607,7 +1625,10 @@ maintainAspectRatio: false,
     refreshMapStyles();
     renderSidebarContent();
     dom.modal.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    // Lock background scroll only on non-mobile so modal body can scroll on phones
+    if (window.innerWidth > 900) {
+      document.body.style.overflow = 'hidden';
+    }
     loadAreaPackages();
   }
 
@@ -1632,7 +1653,10 @@ maintainAspectRatio: false,
     refreshMapStyles();
     renderSidebarContent();
     dom.modal.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    // Lock background scroll only on non-mobile so modal body can scroll on phones
+    if (window.innerWidth > 900) {
+      document.body.style.overflow = 'hidden';
+    }
     loadAreaPackages();
   }
 
@@ -1652,6 +1676,7 @@ maintainAspectRatio: false,
       activeTab: 'all'
     };
     dom.modal.classList.remove('open');
+    // Always clear overflow lock when closing modal
     document.body.style.overflow = '';
   }
 
